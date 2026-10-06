@@ -1,5 +1,5 @@
 // Service worker: permite instalar la app y abrirla sin internet con los últimos datos.
-const CACHE = "vuelos-v2";
+const CACHE = "vuelos-v3";
 const ARCHIVOS = ["./", "./index.html", "./styles.css", "./app.js", "./config.js", "./manifest.webmanifest",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon.png"];
 
