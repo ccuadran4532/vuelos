@@ -1,7 +1,7 @@
 {
   "name": "Vuelos · Ofertas desde Santiago",
   "short_name": "Vuelos",
-  "description": "Ofertas de vuelos desde Santiago para 2 personas",
+  "description": "Ofertas de vuelos desde Santiago",
   "lang": "es-CL",
   "start_url": "./index.html",
   "scope": "./",

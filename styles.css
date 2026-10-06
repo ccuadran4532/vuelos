@@ -135,3 +135,11 @@ table.bag th{color:var(--label2);font-weight:600}
 .err{color:var(--red)}
 .ok{color:var(--green)}
 .navbar .gear{border:0;background:transparent;color:var(--label2);font-size:20px;cursor:pointer;padding:4px 6px}
+
+.paxbtn{border:0;background:var(--pill);color:var(--tint);font:600 15px var(--font);padding:3px 10px;border-radius:99px;cursor:pointer}
+.stepper{margin-left:auto;display:flex;align-items:center;gap:14px}
+.stepper button{width:36px;height:36px;border-radius:99px;border:0;background:var(--fill);color:var(--label);font:600 20px var(--font);cursor:pointer}
+.stepper b{min-width:18px;text-align:center;font-size:17px}
+details.alerta summary{list-style:none;cursor:pointer}
+details.alerta summary::-webkit-details-marker{display:none}
+details.alerta + details.alerta summary::before{content:"";position:absolute;top:0;right:20px;left:70px;border-top:1px solid var(--sep)}

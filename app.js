@@ -11,7 +11,12 @@ const TITLES={hoy:'Hoy',comparar:'Comparar',mis:'Destinos',promos:'Promos'};
 const AP={MDZ:'Mendoza',MVD:'Montevideo',GRU:'São Paulo',FLN:'Florianópolis',GIG:'Río de Janeiro',SCL:'Santiago'};
 let OFERTAS=[],MIS=[],TARIFAS={},filtro='todo',tab='hoy',detId=null;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const total2=o=>o.tipo==='ida'?o.precio*4:o.precio*2;
+// Pasajeros (se recuerdan en el teléfono). Los niños pagan tarifa de adulto en estas aerolíneas, salvo promociones puntuales.
+let PAX=(()=>{try{return JSON.parse(localStorage.getItem('pax'))||{a:2,n:0}}catch(e){return{a:2,n:0}}})();
+const NP=()=>PAX.a+PAX.n;
+const paxTxt=()=>`${PAX.a} ${PAX.a===1?'adulto':'adultos'}${PAX.n?` y ${PAX.n} ${PAX.n===1?'niño':'niños'}`:''}`;
+const total2=o=>(o.tipo==='ida'?o.precio*2:o.precio)*NP();
+const conPax=(link)=>String(link||'').replace(/([?&](?:ADT|adt)=)\d+/,'$1'+PAX.a).replace(/([?&](?:CHD|chd)=)\d+/,'$1'+PAX.n);
 const ppRT=o=>o.tipo==='ida'?o.precio*2:o.precio;
 const dd=s=>new Date(s+'T12:00:00Z');
 const fdate=s=>{if(!s)return'';const d=dd(s);return `${DOW[d.getUTCDay()]} ${d.getUTCDate()}/${d.getUTCMonth()+1}`};
@@ -38,7 +43,7 @@ function cellOferta(o,showDest=true){const w=MIS.find(m=>m.iata===o.iata),hit=w&
   return `<button type="button" class="cell ic" data-open="${esc(o.id)}">
     <span class="tile" style="background:${TILE[o.aerolinea]||'var(--teal)'}">${esc((o.aerolinea||'?').slice(0,2).toUpperCase())}</span>
     <span class="body"><span class="title">${esc(showDest?o.destino:o.aerolinea)}</span>
-      <span class="detail" style="display:block">${showDest?esc(o.aerolinea)+' · ':''}${o.tipo==='ida'?'solo ida':'ida y vuelta'}${o.ida?` · ${fdate(o.ida)}${o.vuelta?' → '+fdate(o.vuelta):''}`:''}</span>
+      <span class="detail" style="display:block">${showDest?esc(o.aerolinea)+' · ':''}${o.tipo==='ida'?'precio por tramo':'ida y vuelta'}${o.ida?` · ${fdate(o.ida)}${o.vuelta?' → '+fdate(o.vuelta):''}`:''}</span>
       <span>${trend(o)}${hit?'<span class="badge b-green">Bajo tu precio</span>':''}${o.promo?`<span class="badge b-orange">${esc(o.promo)}</span>`:''}</span></span>
     <span class="right"><b class="mono">${showDest?CLP(total2(o)):CLP(ppRT(o))}</b><span class="mono">${showDest?CLP(o.precio)+' c/u':'por persona i/v'}</span>${showDest?spark(o.hist):''}</span>${CHEV}</button>`}
 
@@ -90,10 +95,10 @@ function drawDet(o){
   <div class="hero">
     <span class="k">${esc(o.aerolinea)}${o.promo?' · '+esc(o.promo):''}</span>
     <div class="big">${esc(o.destino)}</div>
-    <div class="detail" style="color:var(--label2)">Santiago → ${esc(o.destino)} · ${o.tipo==='ida'?'tarifa solo ida, sin tasas':'ida y vuelta, precio final'}</div>
+    <div class="detail" style="color:var(--label2)">Santiago → ${esc(o.destino)} · ${o.tipo==='ida'?(o.tasas?'precio por tramo, tasas incluidas':'tarifa solo ida, sin tasas'):'ida y vuelta, precio final'}</div>
     <dl class="kv" style="margin:10px 0 0">
       <dt>Por persona${o.tipo==='ida'?' (un tramo)':''}</dt><dd class="mono">${CLP(o.precio)}</dd>
-      <dt>Total 2 personas ida y vuelta</dt><dd class="mono" style="font-size:18px">${CLP(total2(o))}</dd>
+      <dt>Total ${NP()} ${NP()===1?'persona':'personas'} ida y vuelta</dt><dd class="mono" style="font-size:18px">${CLP(total2(o))}</dd>
       ${o.ida?`<dt>Fechas de la oferta</dt><dd>${fdate(o.ida)}${o.vuelta?' → '+fdate(o.vuelta):''}</dd>`:''}
       ${enFecha?`<dt>Ida ese día (calendario)</dt><dd class="mono">${CLP(enFecha.p)} c/u</dd>`:''}
     </dl>
@@ -107,20 +112,27 @@ function drawDet(o){
     ${t.cambios?`<div class="note"><b>Cambios:</b> ${esc(t.cambios)}</div>`:''}
     ${t.consejo?`<div class="note" style="color:var(--tint)">${esc(t.consejo)}</div>`:''}
   </div>${t.fuente?`<div class="gfoot">Fuente: ${esc(t.fuente)}.</div>`:''}</div>
-  ${o.aerolinea==='JetSMART'&&TARIFAS.JetSMART?`<div class="group"><div class="ghead">Costo real para 2 con maleta de mano</div><div class="list"><div class="note">Pasajes ${CLP(total2(o))} + maleta de mano (4 tramos × $12.900) ${CLP(4*12900)} = <b class="mono">${CLP(total2(o)+4*12900)}</b>, sin tasas.</div></div></div>`:''}
+  ${o.aerolinea==='JetSMART'&&TARIFAS.JetSMART?`<div class="group"><div class="ghead">Costo real para ${NP()} con maleta de mano</div><div class="list"><div class="note">Pasajes ${CLP(total2(o))} + maleta de mano (${NP()*2} tramos × $12.900) ${CLP(NP()*2*12900)} = <b class="mono">${CLP(total2(o)+NP()*2*12900)}</b>.</div></div></div>`:''}
   <div class="group"><div class="ghead">Otras aerolíneas a ${esc(o.destino)}</div><div class="list">${others.length?others.map(x=>cellOferta(x,false)).join(''):'<div class="note">Hoy no hay otra aerolínea con oferta publicada a este destino. LATAM no se puede leer de forma automática.</div>'}</div></div>
   ${(o.hist||[]).length>1?`<div class="group"><div class="ghead">Historial de precio</div><div class="list"><div class="note">${o.hist.map(h=>`${fdate(h.f)}: <b class="mono">${CLP(h.p)}</b>`).join(' · ')}</div></div></div>`:''}
   <div class="buy">
-    ${o.link?`<a class="btn" href="${esc(o.link)}" target="_blank" rel="noopener noreferrer">Comprar en ${esc(o.aerolinea)}</a>`:''}
+    ${o.link?`<a class="btn" href="${esc(conPax(o.link))}" target="_blank" rel="noopener noreferrer">Comprar en ${esc(o.aerolinea)}</a>`:''}
     <div class="gfoot">Comprar es lo único que pasa en el sitio de la aerolínea, porque el pago se hace allí. Para no dejar rastro, mantén presionado el botón y elige "Abrir en pestaña de incógnito" (Chrome) o "Abrir en modo secreto" (Samsung Internet).</div>
   </div>`;
   bindOpen($('v-det'))}
 
 // ---------- estado, destinos
+function hace(iso){if(!iso)return'';const m=Math.round((Date.now()-new Date(iso))/60000);if(m<1)return'recién';if(m<60)return'hace '+m+' min';const h=Math.round(m/60);if(h<24)return'hace '+h+' h';return'hace '+Math.round(h/24)+' d'}
+let ALERTAS=[],REFRESCADO=null,ACTUALIZANDO=false;
+function drawStamp(){$('stamp').textContent=ACTUALIZANDO?'Actualizando…':(REFRESCADO?'Precios '+hace(REFRESCADO):'')}
+function drawAlertas(){
+  const L=ALERTAS.slice(0,6);$('alertasG').hidden=!L.length;
+  $('alertas').innerHTML=L.map(x=>`<details class="alerta"><summary class="cell"><span class="tile" style="background:${TILE[x.fuente]||(x.tipo==='noticia'?'var(--label3)':'var(--teal)')}">${x.tipo==='noticia'?'📰':esc((x.fuente||'?').slice(0,2).toUpperCase())}</span>
+    <span class="body"><span class="title">${esc(x.titulo)}</span><span class="detail" style="display:block">${esc(x.fuente)} · ${hace(x.fecha)}${x.importante?' · <b style="color:var(--orange)">relámpago</b>':''}</span></span></summary>
+    ${x.resumen?`<div class="note">${esc(x.resumen)}</div>`:''}</details>`).join('')}
 function drawEstado(e){
   if(!e){$('stamp').textContent='Sin datos';$('resumen').textContent='Todavía no hay una revisión diaria.';$('eventos').innerHTML='<div class="empty">Sin eventos registrados.</div>';return}
   const d=new Date(e.actualizado);
-  $('stamp').textContent=d.toLocaleDateString('es-CL',{weekday:'short',day:'numeric',month:'short'})+' · '+d.toLocaleTimeString('es-CL',{hour:'2-digit',minute:'2-digit'});
   $('resumen').textContent=e.resumen||'';
   const col={'En curso':'b-green','Pasó':'b-red'};
   $('eventos').innerHTML=(e.eventos||[]).map(x=>`<div class="cell"><span class="body"><span class="title">${esc(x.nombre)}</span><span class="detail" style="display:block">${esc(x.fechas)}${x.nota?' · '+esc(x.nota):''}</span></span><span class="badge ${col[x.estado]||'b-orange'}" style="margin:0">${esc(x.estado)}</span></div>`).join('')||'<div class="empty">Sin eventos registrados.</div>'}
@@ -155,9 +167,9 @@ const conf={
 function aplicar(datos,desdeCache){
   OFERTAS=(datos.ofertas||[]).map(o=>({...o,id:o.id||((o.aerolinea||'x').toLowerCase().slice(0,3)+'-'+o.iata)}));
   MIS=(datos.seguimiento||[]).map(m=>({...m,id:m.iata}));
-  TARIFAS=datos.tarifas||{};
-  drawEstado(datos.estado||null);redraw();
-  if(desdeCache)$('stamp').textContent+=' · sin conexión';
+  TARIFAS=datos.tarifas||{};ALERTAS=datos.alertas||[];REFRESCADO=datos.refrescado||(datos.estado&&datos.estado.actualizado)||null;drawAlertas();
+  drawEstado(datos.estado||null);redraw();drawStamp();
+  if(desdeCache)$('stamp').textContent='Sin conexión · '+hace(REFRESCADO);
 }
 async function cargar(){
   if(!conf.url||!conf.key){$('stamp').textContent='Sin configurar';$('resumen').textContent='Toca ⚙︎ arriba a la derecha y escribe el servidor y tu clave. Se hace una sola vez.';$('lista').innerHTML='<div class="empty">Falta configurar la conexión.</div>';return}
@@ -167,6 +179,11 @@ async function cargar(){
     if(!j.ok){$('stamp').textContent='Clave incorrecta';$('resumen').textContent='El servidor rechazó la clave. Revísala en Ajustes (⚙︎).';return}
     try{localStorage.setItem('datos',JSON.stringify(j.datos))}catch(e){}
     aplicar(j.datos,false);
+    // Pide al servidor que traiga los precios de este momento (tarda unos segundos).
+    ACTUALIZANDO=true;drawStamp();
+    try{const r2=await fetch(conf.url+(conf.url.includes('?')?'&':'?')+'clave='+encodeURIComponent(conf.key)+'&refrescar=1&t='+Date.now());const j2=await r2.json();
+      if(j2.ok){try{localStorage.setItem('datos',JSON.stringify(j2.datos))}catch(e){}ACTUALIZANDO=false;aplicar(j2.datos,false)}}
+    finally{ACTUALIZANDO=false;drawStamp()}
   }catch(err){
     let c=null;try{c=JSON.parse(localStorage.getItem('datos')||'null')}catch(e){}
     if(c)aplicar(c,true);else{$('stamp').textContent='Sin conexión';$('lista').innerHTML='<div class="empty">No hay internet y todavía no hay datos guardados en el teléfono.</div>'}
@@ -190,6 +207,11 @@ $('cfgf').addEventListener('submit',async e=>{e.preventDefault();
     else $('cfgMsg').innerHTML='<span class="err">El servidor respondió, pero la clave no coincide.</span>'}
   catch(err){$('cfgMsg').innerHTML='<span class="err">No se pudo conectar. Revisa la dirección del servidor.</span>'}});
 
+function drawPax(){$('paxTxt').textContent=paxTxt();$('pA').textContent=PAX.a;$('pN').textContent=PAX.n;$('totalTxt').textContent=`Ofertas · total para ${NP()} ${NP()===1?'persona':'personas'}`}
+function setPax(k,d){const v=PAX[k]+d;if(k==='a'&&(v<1||v+PAX.n>9))return;if(k==='n'&&(v<0||v+PAX.a>9))return;PAX[k]=v;try{localStorage.setItem('pax',JSON.stringify(PAX))}catch(e){}drawPax();redraw()}
+$('paxBtn').onclick=()=>{$('paxBox').hidden=!$('paxBox').hidden};
+document.querySelectorAll('[data-pax]').forEach(b=>b.onclick=()=>setPax(b.dataset.pax,+b.dataset.d));
+drawPax();
 drawMis();
 // Cargar los últimos datos guardados al instante y luego los nuevos.
 try{const c=JSON.parse(localStorage.getItem('datos')||'null');if(c)aplicar(c,false)}catch(e){}

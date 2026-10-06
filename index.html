@@ -23,7 +23,13 @@
 <main>
   <!-- HOY -->
   <section class="view" id="v-hoy">
-    <div><h1 class="large">Hoy</h1><p class="sub">Santiago · 2 adultos · ida y vuelta</p></div>
+    <div><h1 class="large">Hoy</h1><p class="sub">Santiago · <button type="button" class="paxbtn" id="paxBtn"><span id="paxTxt">2 adultos</span> ▾</button> · ida y vuelta</p></div>
+    <div class="group" id="paxBox" hidden><div class="list">
+      <div class="field"><label>Adultos</label><div class="stepper"><button type="button" data-pax="a" data-d="-1" aria-label="Menos adultos">−</button><b id="pA">2</b><button type="button" data-pax="a" data-d="1" aria-label="Más adultos">+</button></div></div>
+      <div class="field"><label>Niños (2–11)</label><div class="stepper"><button type="button" data-pax="n" data-d="-1" aria-label="Menos niños">−</button><b id="pN">0</b><button type="button" data-pax="n" data-d="1" aria-label="Más niños">+</button></div></div>
+    </div><div class="gfoot">Los totales se calculan para todos. Los niños pagan como adulto en SKY, JetSMART y LATAM, salvo promociones de niños.</div></div>
+    <div class="group" id="alertasG" hidden><div class="ghead">Alertas de promociones</div><div class="list" id="alertas"></div>
+      <div class="gfoot">Correos de promociones de las aerolíneas y noticias de los últimos 3 días. Se revisan al abrir la app y cada 30 minutos.</div></div>
     <div class="hero"><span class="k">Resumen del día</span><p id="resumen">Cargando las ofertas…</p></div>
     <div class="seg" id="fil" role="group" aria-label="Filtrar ofertas">
       <button type="button" data-f="todo" aria-pressed="true">Todo</button>
@@ -32,7 +38,7 @@
       <button type="button" data-f="baja" aria-pressed="false">Bajaron</button>
     </div>
     <div class="group">
-      <div class="ghead">Ofertas · total para 2 personas</div>
+      <div class="ghead" id="totalTxt">Ofertas · total para 2 personas</div>
       <div class="list" id="lista"><div class="empty">Aquí aparecen las ofertas del día.</div></div>
       <div class="gfoot">Toca una oferta para ver horarios, calendario de precios, equipaje y comparación, sin salir de la app.</div>
     </div>
@@ -42,7 +48,7 @@
   <section class="view" id="v-comparar" hidden>
     <div><h1 class="large">Comparar</h1><p class="sub">Cada destino con todas sus aerolíneas, ordenadas por precio por persona ida y vuelta.</p></div>
     <div class="view" id="comp" style="gap:18px"></div>
-    <div class="gfoot">Las tarifas "solo ida" de JetSMART se multiplican por 2 y no incluyen tasas ni maleta. SKY incluye tasas. LATAM no tiene datos porque bloquea la lectura automática; tus millas Santander se revisan en la app de LATAM.</div>
+    <div class="gfoot">Las tarifas "solo ida" de JetSMART se multiplican por 2 y no incluyen tasas ni maleta. SKY incluye tasas. LATAM, Iberia, American, Copa y otras internacionales no dejan leer sus precios de forma automática: sus promociones llegan como alertas (tus correos y noticias) en la pestaña Hoy.</div>
   </section>
 
   <!-- DESTINOS -->
