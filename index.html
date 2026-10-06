@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0A6CDB">
+<meta name="description" content="Ofertas de vuelos desde Santiago, solo para Carlos">
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="icons/favicon.png">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Vuelos</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="navbar"><div class="row">
+  <button type="button" class="back" id="backBtn" hidden aria-label="Volver">‹</button>
+  <span class="t" id="navt">Hoy</span>
+  <span class="s mono" id="stamp">Cargando…</span>
+  <button type="button" class="gear" id="gearBtn" aria-label="Ajustes">⚙︎</button>
+</div></div>
+
+<main>
+  <!-- HOY -->
+  <section class="view" id="v-hoy">
+    <div><h1 class="large">Hoy</h1><p class="sub">Santiago · 2 adultos · ida y vuelta</p></div>
+    <div class="hero"><span class="k">Resumen del día</span><p id="resumen">Cargando las ofertas…</p></div>
+    <div class="seg" id="fil" role="group" aria-label="Filtrar ofertas">
+      <button type="button" data-f="todo" aria-pressed="true">Todo</button>
+      <button type="button" data-f="nacional" aria-pressed="false">Nacional</button>
+      <button type="button" data-f="internacional" aria-pressed="false">Internac.</button>
+      <button type="button" data-f="baja" aria-pressed="false">Bajaron</button>
+    </div>
+    <div class="group">
+      <div class="ghead">Ofertas · total para 2 personas</div>
+      <div class="list" id="lista"><div class="empty">Aquí aparecen las ofertas del día.</div></div>
+      <div class="gfoot">Toca una oferta para ver horarios, calendario de precios, equipaje y comparación, sin salir de la app.</div>
+    </div>
+  </section>
+
+  <!-- COMPARAR -->
+  <section class="view" id="v-comparar" hidden>
+    <div><h1 class="large">Comparar</h1><p class="sub">Cada destino con todas sus aerolíneas, ordenadas por precio por persona ida y vuelta.</p></div>
+    <div class="view" id="comp" style="gap:18px"></div>
+    <div class="gfoot">Las tarifas "solo ida" de JetSMART se multiplican por 2 y no incluyen tasas ni maleta. SKY incluye tasas. LATAM no tiene datos porque bloquea la lectura automática; tus millas Santander se revisan en la app de LATAM.</div>
+  </section>
+
+  <!-- DESTINOS -->
+  <section class="view" id="v-mis" hidden>
+    <div><h1 class="large">Destinos</h1><p class="sub">Te avisa cuando una oferta baja de tu precio máximo.</p></div>
+    <form class="group" id="addf">
+      <div class="ghead">Agregar destino</div>
+      <div class="list">
+        <div class="field"><label for="aIata">Código</label><input id="aIata" maxlength="3" placeholder="LIM" autocapitalize="characters" autocomplete="off" required></div>
+        <div class="field"><label for="aNom">Nombre</label><input id="aNom" placeholder="Lima" autocomplete="off"></div>
+        <div class="field"><label for="aMax">Máx. por persona</label><input id="aMax" type="number" inputmode="numeric" placeholder="250.000"></div>
+        <div class="field"><label for="aPay">Pagar con</label><select id="aPay"><option value="cualquiera" selected>Lo que convenga</option><option value="millas">Millas LATAM Pass</option><option value="dinero">Dinero</option></select></div>
+      </div>
+      <div class="gfoot" id="addMsg">El precio máximo es por persona, ida y vuelta, en pesos. La revisión de cada mañana incluye tus destinos.</div>
+      <button class="btn" type="submit">Agregar</button>
+    </form>
+    <div class="group"><div class="ghead">Mis destinos</div><div class="list" id="mis"></div></div>
+  </section>
+
+  <!-- PROMOS -->
+  <section class="view" id="v-promos" hidden>
+    <div><h1 class="large">Promos</h1><p class="sub">Eventos de descuento en pasajes.</p></div>
+    <div class="group"><div class="ghead">Calendario</div><div class="list" id="eventos"></div></div>
+    <div class="group"><div class="ghead">Millas LATAM Pass</div>
+      <div class="list"><div class="note">Valor de la milla = (tarifa en dinero − tasas del canje) ÷ millas. Desde unos <b>10 CLP por milla</b> conviene canjear. Bajo 6 CLP, conviene pagar en dinero y guardar las millas para una ruta larga.</div></div></div>
+    <div class="group"><div class="ghead">Bajarse en la escala</div>
+      <div class="list"><div class="note"><ul>
+        <li>Si no te presentas a un tramo, se anulan los siguientes. Por eso solo sirve en el regreso.</li>
+        <li>Solo con maleta de mano.</li>
+        <li>LATAM, SKY y JetSMART lo prohíben. Nunca lo hagas con millas ni con tu número LATAM Pass.</li>
+      </ul></div></div></div>
+  </section>
+
+  <!-- AJUSTES -->
+  <section class="view" id="v-ajustes" hidden>
+    <div><h1 class="large">Ajustes</h1><p class="sub">Se configura una sola vez en este teléfono.</p></div>
+    <form class="group" id="cfgf">
+      <div class="ghead">Conexión</div>
+      <div class="list">
+        <div class="field"><label for="cUrl">Servidor</label><input id="cUrl" placeholder="https://script.google.com/…" autocomplete="off"></div>
+        <div class="field"><label for="cKey">Clave</label><input id="cKey" placeholder="XXXX-XXXX-XXXX" autocapitalize="characters" autocomplete="off"></div>
+      </div>
+      <div class="gfoot" id="cfgMsg">La clave está en tu PC, en el archivo Vuelos-App\privado\CLAVE.txt.</div>
+      <button class="btn" type="submit">Guardar y probar</button>
+    </form>
+  </section>
+
+  <!-- DETALLE -->
+  <section class="view" id="v-det" hidden></section>
+</main>
+
+<nav class="tabbar"><div class="row">
+  <button type="button" data-v="hoy" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>Hoy</button>
+  <button type="button" data-v="comparar"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 20V10h3v10zm6.5 0V4h3v16zM17 20v-7h3v7z"/></svg>Comparar</button>
+  <button type="button" data-v="mis"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.3 18.2 21l-1.6-7 5.4-4.7-7.2-.6L12 2 9.2 8.7 2 9.3 7.4 14l-1.6 7z"/></svg>Destinos</button>
+  <button type="button" data-v="promos"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4v6.6c0 .5.2 1 .6 1.4l8.4 8.4a2 2 0 0 0 2.8 0l6.6-6.6a2 2 0 0 0 0-2.8L13 2.6c-.4-.4-.9-.6-1.4-.6H5a2 2 0 0 0-2 2zm4.5 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/></svg>Promos</button>
+</div></nav>
+
+<script src="config.js"></script>
+<script src="app.js"></script>
+<script>
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
+</script>
+</body>
+</html>
