@@ -3,27 +3,114 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#0A6CDB">
+<meta name="theme-color" content="#0f3a7a">
 <meta name="description" content="Ofertas de vuelos desde Santiago, solo para Carlos">
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" href="icons/favicon.png">
 <link rel="manifest" href="manifest.webmanifest">
 <title>Vuelos</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div class="luces" aria-hidden="true"><i></i><i></i><i></i></div>
 
 <div class="navbar"><div class="row">
   <button type="button" class="back" id="backBtn" hidden aria-label="Volver">‹</button>
-  <span class="t" id="navt">Hoy</span>
+  <span class="marca" id="marca"><img src="icons/icon-192.png" alt=""></span>
+  <span class="t" id="navt">Buscar</span>
   <span class="s mono" id="stamp">Cargando…</span>
   <button type="button" class="gear" id="gearBtn" aria-label="Ajustes">⚙︎</button>
 </div></div>
 
 <main>
+  <!-- BUSCAR -->
+  <section class="view" id="v-buscar">
+    <!-- inicio del buscador -->
+    <div class="view" id="bs-home">
+      <div><h1 class="large">¿A dónde vamos?</h1><p class="sub">Precios de todas las aerolíneas, con tasas incluidas.</p></div>
+      <div class="bs-card glass">
+        <div class="seg dos" id="bsModo" role="group" aria-label="Tipo de viaje">
+          <button type="button" data-m="rt" aria-pressed="true">Ida y vuelta</button>
+          <button type="button" data-m="ow" aria-pressed="false">Solo ida</button>
+        </div>
+        <div class="bs-row" style="cursor:default">
+          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="10" r="3"/><path d="M12 21s7-6.2 7-11a7 7 0 0 0-14 0c0 4.8 7 11 7 11z"/></svg></span>
+          <span><span class="k">Desde</span><span class="v">Santiago · SCL</span></span>
+        </div>
+        <button type="button" class="bs-row" id="bsDestino">
+          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.2 3 14.8 0 18M12 3c-3 3.2-3 14.8 0 18"/></svg></span>
+          <span style="flex:1;min-width:0"><span class="k">Hacia</span><span class="v vacio" id="bsDestinoTxt">Elige país y ciudad</span></span>
+        </button>
+        <button type="button" class="bs-row" id="bsFechas">
+          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></span>
+          <span style="flex:1;min-width:0"><span class="k">Fechas</span><span class="v vacio" id="bsFechasTxt">Elige ida y vuelta</span></span>
+        </button>
+        <button type="button" class="bs-row" id="bsPersonas">
+          <span class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.5"/><path d="M16 14.2c2.8.3 5 2.7 5 5.8"/></svg></span>
+          <span style="flex:1;min-width:0"><span class="k">Pasajeros</span><span class="v" id="bsPersonasTxt">2 adultos · Turista</span></span>
+        </button>
+        <button type="button" class="btn" id="bsBuscar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar vuelos</button>
+        <div class="gfoot" id="bsMsg" style="text-align:center"></div>
+      </div>
+      <div class="group" id="bsRecG" hidden><div class="ghead">Búsquedas recientes</div><div class="recientes" id="bsRec"></div></div>
+      <div class="gfoot">Cada búsqueda la hace tu servidor en Google Flights sin cookies ni historial, como una ventana de incógnito. Si repites la misma búsqueda antes de 30 minutos, se usa la respuesta guardada.</div>
+    </div>
+
+    <!-- país -->
+    <div class="view" id="bs-pais" hidden>
+      <div class="titulo"><button type="button" class="redondo" data-atras="home" aria-label="Volver">‹</button><h2>¿A qué país?</h2></div>
+      <label class="buscador glass"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="bsFiltro" type="search" placeholder="Buscar país o ciudad" autocomplete="off" aria-label="Buscar país o ciudad"></label>
+      <div class="paises"><div class="col" id="bsPaises"><div class="empty">Cargando países…</div></div><div class="indice" id="bsIndice" aria-label="Ir a la letra"></div></div>
+    </div>
+
+    <!-- ciudad -->
+    <div class="view" id="bs-ciudad" hidden>
+      <div class="titulo"><button type="button" class="redondo" data-atras="pais" aria-label="Volver">‹</button><div><h2 id="bsPaisNom">País</h2><div class="gfoot" style="padding:0" id="bsPaisInfo"></div></div></div>
+      <div class="list" id="bsCiudades"></div>
+    </div>
+
+    <!-- fechas -->
+    <div class="view" id="bs-fechas" hidden>
+      <div class="titulo"><button type="button" class="redondo" data-atras="home" aria-label="Volver">‹</button><h2>¿Cuándo viajas?</h2></div>
+      <div class="seg dos" id="bsModo2" role="group" aria-label="Tipo de viaje">
+        <button type="button" data-m="rt" aria-pressed="true">Ida y vuelta</button>
+        <button type="button" data-m="ow" aria-pressed="false">Solo ida</button>
+      </div>
+      <div class="cajas"><div class="caja glass activa" id="bsCajaIda"><span class="k">Ida</span><span class="v" id="bsIdaTxt">Elige</span></div><div class="caja glass" id="bsCajaVuelta"><span class="k">Vuelta</span><span class="v" id="bsVueltaTxt">Elige</span></div></div>
+      <div class="list" id="bsMeses" style="padding-bottom:80px"></div>
+      <div class="pie glass" id="bsPieFechas" hidden><span class="txt"><b id="bsNoches"></b><span id="bsNochesNota"></span></span><button type="button" class="btn" id="bsFechasOk">Listo</button></div>
+    </div>
+
+    <!-- personas -->
+    <div class="view" id="bs-personas" hidden>
+      <div class="titulo"><button type="button" class="redondo" data-atras="home" aria-label="Volver">‹</button><h2>¿Quiénes viajan?</h2></div>
+      <div class="list">
+        <div class="field"><label>Adultos<br><small style="font-weight:600;color:var(--label2)">12 años o más</small></label><div class="stepper"><button type="button" data-p="a" data-d="-1" aria-label="Quitar adulto">−</button><b id="bsA">2</b><button type="button" data-p="a" data-d="1" aria-label="Agregar adulto">+</button></div></div>
+        <div class="field"><label>Niños<br><small style="font-weight:600;color:var(--label2)">2 a 11 años</small></label><div class="stepper"><button type="button" data-p="n" data-d="-1" aria-label="Quitar niño">−</button><b id="bsN">0</b><button type="button" data-p="n" data-d="1" aria-label="Agregar niño">+</button></div></div>
+        <div class="field"><label>Bebés<br><small style="font-weight:600;color:var(--label2)">Menores de 2, en brazos</small></label><div class="stepper"><button type="button" data-p="b" data-d="-1" aria-label="Quitar bebé">−</button><b id="bsB">0</b><button type="button" data-p="b" data-d="1" aria-label="Agregar bebé">+</button></div></div>
+      </div>
+      <div class="ghead">Clase</div>
+      <div class="seg tres" id="bsClase" role="group" aria-label="Clase">
+        <button type="button" data-c="turista" aria-pressed="true">Turista</button>
+        <button type="button" data-c="premium" aria-pressed="false">Premium</button>
+        <button type="button" data-c="ejecutiva" aria-pressed="false">Ejecutiva</button>
+      </div>
+      <div class="hero"><p>El precio que verás es el <b>total final para todos</b>, con tasas e impuestos incluidos. Si algo se paga aparte (maletas, permisos por escala), te lo muestro en cada vuelo, nunca al final.</p></div>
+      <button type="button" class="btn" data-atras="home">Listo</button>
+    </div>
+
+    <!-- resultados -->
+    <div class="view" id="bs-res" hidden>
+      <div class="titulo"><button type="button" class="redondo" data-atras="home" aria-label="Volver">‹</button><div class="glass" style="flex:1;border-radius:18px;padding:8px 14px;min-width:0"><div style="font-weight:800" id="bsResRuta"></div><div class="gfoot" style="padding:0" id="bsResInfo"></div></div></div>
+      <div id="bsResCuerpo" class="view"></div>
+    </div>
+  </section>
+
   <!-- HOY -->
-  <section class="view" id="v-hoy">
-    <div><h1 class="large">Hoy</h1><p class="sub">Santiago · <button type="button" class="paxbtn" id="paxBtn"><span id="paxTxt">2 adultos</span> ▾</button> · ida y vuelta</p></div>
+  <section class="view" id="v-hoy" hidden>
+    <div><h1 class="large">Ofertas de hoy</h1><p class="sub">Santiago · <button type="button" class="paxbtn" id="paxBtn"><span id="paxTxt">2 adultos</span> ▾</button> · ida y vuelta</p></div>
     <div class="group" id="paxBox" hidden><div class="list">
       <div class="field"><label>Adultos</label><div class="stepper"><button type="button" data-pax="a" data-d="-1" aria-label="Menos adultos">−</button><b id="pA">2</b><button type="button" data-pax="a" data-d="1" aria-label="Más adultos">+</button></div></div>
       <div class="field"><label>Niños (2–11)</label><div class="stepper"><button type="button" data-pax="n" data-d="-1" aria-label="Menos niños">−</button><b id="pN">0</b><button type="button" data-pax="n" data-d="1" aria-label="Más niños">+</button></div></div>
@@ -100,15 +187,17 @@
   <section class="view" id="v-det" hidden></section>
 </main>
 
-<nav class="tabbar"><div class="row">
-  <button type="button" data-v="hoy" aria-current="page"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>Hoy</button>
-  <button type="button" data-v="comparar"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 20V10h3v10zm6.5 0V4h3v16zM17 20v-7h3v7z"/></svg>Comparar</button>
-  <button type="button" data-v="mis"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 17.3 18.2 21l-1.6-7 5.4-4.7-7.2-.6L12 2 9.2 8.7 2 9.3 7.4 14l-1.6 7z"/></svg>Destinos</button>
-  <button type="button" data-v="promos"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 4v6.6c0 .5.2 1 .6 1.4l8.4 8.4a2 2 0 0 0 2.8 0l6.6-6.6a2 2 0 0 0 0-2.8L13 2.6c-.4-.4-.9-.6-1.4-.6H5a2 2 0 0 0-2 2zm4.5 1.5a1.5 1.5 0 1 1 0 3 1.5 1.5 0 0 1 0-3z"/></svg>Promos</button>
+<nav class="tabbar" aria-label="Principal"><div class="row">
+  <button type="button" data-v="buscar" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar</button>
+  <button type="button" data-v="hoy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 4v6.6c0 .5.2 1 .6 1.4l8.4 8.4a2 2 0 0 0 2.8 0l6.6-6.6a2 2 0 0 0 0-2.8L13 2.6c-.4-.4-.9-.6-1.4-.6H5a2 2 0 0 0-2 2z"/><circle cx="7.5" cy="7" r="1.5"/></svg>Ofertas</button>
+  <button type="button" data-v="comparar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Comparar</button>
+  <button type="button" data-v="mis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 17.3 18.2 21l-1.6-7 5.4-4.7-7.2-.6L12 2 9.2 8.7 2 9.3 7.4 14l-1.6 7z"/></svg>Destinos</button>
+  <button type="button" data-v="promos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>Promos</button>
 </div></nav>
 
 <script src="config.js"></script>
 <script src="app.js"></script>
+<script src="buscar.js"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
 </script>

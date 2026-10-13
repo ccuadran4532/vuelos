@@ -7,9 +7,9 @@ const DOWL=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'
 const NAC=new Set(['ARI','IQQ','CJC','ANF','CPO','LSC','CCP','ZCO','ZAL','PMC','BBA','PUQ','IPC','PNT','ZOS','MHC','ZPC']);
 const TILE={'SKY':'var(--indigo)','JetSMART':'var(--orange)','LATAM':'var(--red)'};
 const CHEV='<svg class="chev" viewBox="0 0 8 13" aria-hidden="true"><path d="M1 1l5.5 5.5L1 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const TITLES={hoy:'Hoy',comparar:'Comparar',mis:'Destinos',promos:'Promos'};
+const TITLES={buscar:'Buscar',hoy:'Ofertas',comparar:'Comparar',mis:'Destinos',promos:'Promos'};
 const AP={MDZ:'Mendoza',MVD:'Montevideo',GRU:'São Paulo',FLN:'Florianópolis',GIG:'Río de Janeiro',SCL:'Santiago'};
-let OFERTAS=[],MIS=[],TARIFAS={},filtro='todo',tab='hoy',detId=null;
+let OFERTAS=[],MIS=[],TARIFAS={},filtro='todo',tab='buscar',detId=null;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 // Pasajeros (se recuerdan en el teléfono). Los niños pagan tarifa de adulto en estas aerolíneas, salvo promociones puntuales.
 let PAX=(()=>{try{return JSON.parse(localStorage.getItem('pax'))||{a:2,n:0}}catch(e){return{a:2,n:0}}})();
@@ -29,7 +29,7 @@ function go(v){tab=v;detId=null;
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>go(b.dataset.v));
 $('backBtn').onclick=()=>{history.state&&history.state.det?history.back():go(tab)};
 window.addEventListener('popstate',()=>{if(detId)go(tab)});
-try{const t=localStorage.getItem('tab');if(t&&TITLES[t])go(t)}catch(e){}
+{let t=null;try{t=localStorage.getItem('tab')}catch(e){}go(t&&TITLES[t]?t:'buscar')}
 $('fil').querySelectorAll('button').forEach(b=>b.onclick=()=>{filtro=b.dataset.f;$('fil').querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b));drawOfertas()});
 function bindOpen(root){root.querySelectorAll('[data-open]').forEach(b=>b.onclick=()=>openDet(b.dataset.open))}
 
