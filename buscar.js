@@ -286,10 +286,20 @@
         ${[['todos', 'Todos'], ['directos', 'Directos'], ['sinextra', 'Sin costos extra'], ['rapido', 'Más rápido']].map(([k, t]) => `<button type="button" data-f="${k}" aria-pressed="${FILTRO === k}">${t}</button>`).join('')}
       </div>
       <div class="gfoot">${fCorta(f.ida)}${f.vuelta ? ' – ' + fCorta(f.vuelta) : ''} · ${vuelos.length} vuelos · <b style="color:#fff">total final para ${P} ${P === 1 ? 'persona' : 'personas'}</b>, con tasas e impuestos${bebeTxt}.</div>
-      ${vuelos.length ? vuelos.map((v, i) => tarjeta(v, i === 0 && FILTRO === 'todos', v === masRapido, P)).join('') : '<div class="empty glass" style="border-radius:24px">No hay vuelos con este filtro para esta fecha.</div>'}
+      ${vuelos.length ? vuelos.map((v, i) => tarjeta(v, i === 0 && FILTRO === 'todos', v === masRapido, P) + (/latam/i.test(v.aerolinea) ? bloqueMillas(v, f, i) : '')).join('') : '<div class="empty glass" style="border-radius:24px">No hay vuelos con este filtro para esta fecha.</div>'}
       ${f.link ? `<a class="btn plain" href="${esc(f.link)}" target="_blank" rel="noopener noreferrer">Ver en Google Flights</a>` : ''}
       <div class="gfoot">Precios de Google Flights para 1 adulto multiplicados por ${P}, con tasas de embarque e impuestos obligatorios. Google muestra el precio más bajo publicado; a veces viene de una agencia. Por eso el botón te lleva siempre al <b>sitio oficial de la aerolínea</b>, sin intermediarios ni comisiones: ahí confirmas el precio final antes de pagar. En Google Flights, elige siempre la opción "Reservar con la aerolínea".</div>`;
     $('bsBarras').querySelectorAll('[data-i]').forEach(b => b.onclick = () => { SEL = +b.dataset.i; pintarRes(); });
+    $('bsResCuerpo').querySelectorAll('[data-millas]').forEach(inp => inp.addEventListener('input', () => {
+      const m = +inp.value, precio = +inp.dataset.precio;
+      const out = $('bsResCuerpo').querySelector('[data-millas-out="' + inp.dataset.millas + '"]');
+      if (!m) { out.textContent = 'Escribe las millas que te pide LATAM por persona.'; return; }
+      const valor = precio / m;
+      const veredicto = valor >= 10 ? '<b style="color:var(--ok)">Conviene usar millas.</b>'
+        : valor >= 6 ? '<b style="color:var(--warn)">Da casi lo mismo: compara las tasas que cobra el canje.</b>'
+        : '<b style="color:var(--bad)">Conviene pagar en dinero y guardar las millas.</b>';
+      out.innerHTML = `Cada milla vale <b>${CLP(valor)}</b> en este vuelo (${CLP(precio)} ÷ ${m.toLocaleString('es-CL')} millas). ${veredicto} En el canje igual se pagan tasas en dinero.`;
+    }));
     $('bsFiltros').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FILTRO = b.dataset.f; pintarRes(); });
   }
   // Sitios oficiales: para comprar sin agencias ni comisiones.
@@ -301,6 +311,22 @@
     ['Lufthansa','https://www.lufthansa.com/cl/es/'],['Turkish','https://www.turkishairlines.com/es-cl/'],['Emirates','https://www.emirates.com/cl/spanish/'],['Qatar','https://www.qatarairways.com/es-cl/'],
     ['Swiss','https://www.swiss.com/cl/es'],['ITA','https://www.ita-airways.com/es_cl'],['Qantas','https://www.qantas.com/'],['Air New Zealand','https://www.airnewzealand.com/'],['Arajet','https://www.arajet.com/es']];
   function oficial(aer) { const p = (aer || '').split(/[·,]/)[0].trim().toLowerCase(); const o = OFICIAL.find(([n]) => p.startsWith(n.toLowerCase())); return o ? { nombre: o[0], url: o[1] } : null; }
+  // Millas LATAM Pass: LATAM solo muestra millas con la cuenta iniciada, así que abrimos su búsqueda de canje ya rellenada.
+  function linkMillas(f) {
+    const p = new URLSearchParams({ origin: ORI().iata, outbound: f.ida + 'T15:00:00.000Z', destination: B.destino.iata, adt: B.a, chd: B.n, inf: B.b,
+      trip: f.vuelta ? 'RT' : 'OW', cabin: B.clase === 'ejecutiva' ? 'Business' : B.clase === 'premium' ? 'Premium Economy' : 'Economy', redemption: 'true', sort: 'RECOMMENDED' });
+    if (f.vuelta) p.set('inbound', f.vuelta + 'T15:00:00.000Z');
+    return 'https://www.latamairlines.com/cl/es/ofertas-vuelos?' + p.toString();
+  }
+  function bloqueMillas(v, f, i) {
+    return `<div class="glass" style="border-radius:16px;padding:12px 14px;display:grid;gap:8px;border-color:rgba(255,201,139,.5);margin-top:-8px">
+      <div style="font-size:13px;font-weight:800;color:var(--tint)">Millas LATAM Pass</div>
+      <a class="btn plain" style="padding:10px;font-size:14px" href="${linkMillas(f)}" target="_blank" rel="noopener noreferrer">Ver precio en millas ↗</a>
+      <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--label2)">Millas por persona
+        <input type="number" inputmode="numeric" data-millas="${i}" data-precio="${v.precio}" placeholder="ej. 60000" style="flex:1;min-width:0;background:rgba(255,255,255,.12);border:1px solid var(--line);border-radius:10px;color:#fff;padding:8px;font:700 15px var(--font)"></label>
+      <div class="gfoot" style="padding:0" data-millas-out="${i}">LATAM muestra las millas solo cuando ingresas con tu cuenta. Escribe aquí lo que te pida y te digo si conviene.</div>
+    </div>`;
+  }
   function minutos(s) { const h = (s.match(/(\d+) h/) || [])[1] || 0, m = (s.match(/(\d+) min/) || [])[1] || 0; return h * 60 + +m; }
   function tarjeta(v, mejor, rapido, P) {
     const ex = extras(v, B.destino.cc);
