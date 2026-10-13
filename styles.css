@@ -281,3 +281,11 @@ details.guia table.bag th{font-size:11.5px;color:var(--tint)}
 details.guia table.bag td{font-size:12px}
 details.guia td.si{color:var(--ok);font-weight:700}
 details.guia td.no{color:var(--warn)}
+
+/* comparación con Kayak */
+.kcard{border-radius:20px;padding:12px 14px;display:grid;gap:8px;background:rgba(255,210,122,.08);border:1px solid rgba(255,210,122,.4)}
+.kcard .top{display:flex;justify-content:space-between;gap:8px;font-size:14px}
+.ktramo{display:grid;grid-template-columns:52px 1fr;column-gap:8px;font-size:13px;line-height:1.4}
+.ktramo .kt{grid-row:span 2;font-size:11px;font-weight:800;color:var(--tint);text-transform:uppercase;padding-top:2px}
+.ktramo b{font-size:16px}
+.ktramo span:last-child{color:var(--label2)}

@@ -283,6 +283,7 @@
         <div class="barras" id="bsBarras">${barras}</div>
         <div class="gfoot" style="padding:8px 10px 2px">Verde = más barato. ${RES.vuelta ? `La vuelta es siempre ${noches()} noches después.` : ''} ${RES.desdeMemoria ? 'Búsqueda de hace menos de 30 min (no se repitió).' : ''}</div>
       </div>
+      ${comparacionKayak(f, P)}
       ${f.aviso ? `<div class="hero" style="border-color:rgba(125,240,176,.6)"><p>📈 <b>Google Flights:</b> ${esc(f.aviso.replace(/CLP\s?([\d,]+)/, (m, n) => CLP(+n.replace(/,/g, ''))))}</p></div>` : ''}
       ${notasDestino(B.destino.cc).map(t => `<div class="hero" style="border-color:rgba(255,210,122,.6)"><span class="k" style="color:var(--warn)">Costo aparte del destino</span><p>${esc(t)}</p></div>`).join('')}
       <div class="chips" id="bsFiltros">
@@ -378,6 +379,43 @@
       <div class="tw"><table class="bag"><thead><tr><th></th>${g.cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
       <tbody>${g.filas.map(f => `<tr><td>${f[0]}</td>${f.slice(1).map(v => `<td class="${v === S || /^Sí|pieza|Gratis|Sin límite/.test(v) ? 'si' : v === N || v === P ? 'no' : ''}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
       <div class="gtxt">${g.nota}<br><span style="color:var(--label3)">Fuente: ${g.fuente}. Confírmalo siempre en la pantalla de tarifas antes de pagar.</span></div></details>`;
+  }
+  // ---------- comparación con Kayak (segunda fuente)
+  function tramoKayak(t, titulo) {
+    if (!t) return '';
+    const esc2 = t.escalas.length ? t.escalas.map((x, i) => x + (t.esperas[i] ? ' (' + t.esperas[i].replace('h ', ' h ').replace(/m$/, ' min') + ')' : '')).join(', ') : '';
+    return `<div class="ktramo"><span class="kt">${titulo}</span><b>${esc(t.sale)} → ${esc(t.llega)}${t.masDias ? '<sup>+' + t.masDias + '</sup>' : ''}</b>
+      <span>${esc(t.duracion || '')} · ${t.directo ? 'directo' : esc(t.paradas) + (esc2 ? ': ' + esc(esc2) : '')}</span></div>`;
+  }
+  function comparacionKayak(f, P) {
+    const K = f.kayak;
+    if (!RES.fechas.some(x => x.kayak)) return '';
+    if (!K) return `<div class="gfoot">La comparación con Kayak se hace para la fecha que pediste (${fCorta(RES.ida)}). Toca esa barra para verla.</div>`;
+    if (!K.ok) return `<div class="hero"><span class="k">Comparación con Kayak</span><p>Kayak no respondió esta vez. Puedes revisarlo a mano: <a class="tintlink" href="${esc(K.link)}" target="_blank" rel="noopener noreferrer">abrir Kayak ↗</a></p></div>`;
+    const gmin = f.min || Infinity;
+    const masBaratos = K.vuelos.filter(v => v.precio < gmin * 0.99);
+    if (!masBaratos.length) {
+      return `<div class="hero" style="border-color:rgba(125,240,176,.6)"><span class="k" style="color:var(--ok)">✓ Comparado con Kayak</span><p>Kayak no encontró nada más barato. Su precio más bajo es ${CLP(K.min)} por persona; aquí tienes ${CLP(gmin)}.</p></div>`;
+    }
+    const gmejor = (f.vuelos || [])[0];
+    const gdur = gmejor ? minutos(gmejor.duracion) : 0;
+    const tarjetas = masBaratos.slice(0, 3).map(v => {
+      const dur = minutos(v.ida.duracion || '') + (v.vuelta ? minutos(v.vuelta.duracion || '') : 0);
+      const ex = extras({ escalas: [...v.ida.escalas, ...(v.vuelta ? v.vuelta.escalas : [])], directo: v.ida.directo && (!v.vuelta || v.vuelta.directo), escalaTexto: [...v.ida.esperas, ...(v.vuelta ? v.vuelta.esperas : [])].join(' '), cambioAeropuerto: v.ida.cambioAeropuerto || (v.vuelta && v.vuelta.cambioAeropuerto) }, B.destino.cc);
+      const masHoras = gdur && v.ida.duracion ? Math.round((minutos(v.ida.duracion) - gdur) / 60) : 0;
+      return `<div class="kcard">
+        <div class="top"><b>${esc(v.aerolinea)}</b><span class="aer">${esc(v.tarifa || '')}</span></div>
+        ${tramoKayak(v.ida, 'Ida')}${tramoKayak(v.vuelta, 'Vuelta')}
+        ${masHoras >= 2 ? `<div class="extra ojo"><span>⏱</span><span>La ida dura ${masHoras} h más que la opción más barata de Google.</span></div>` : ''}
+        ${ex.filter(x => x[0] !== 'ok').map(([k, t]) => `<div class="extra ojo"><span>⚠</span><span>${esc(t)}</span></div>`).join('')}
+        <div class="vprecio"><span class="pp">${CLP(v.precio)} por persona<br>${CLP(gmin - v.precio)} menos que aquí</span><span class="tot"><b>${CLP(v.precio * P)}</b><span>total ${P} ${P === 1 ? 'persona' : 'personas'}</span></span></div>
+      </div>`;
+    }).join('');
+    return `<div class="hero" style="border-color:rgba(255,210,122,.65)"><span class="k" style="color:var(--warn)">Kayak encontró más barato</span>
+      <p>Hasta <b>${CLP(gmin - masBaratos[0].precio)} menos por persona</b>. Antes de decidir, mira lo que cambia: más escalas u horas, y el precio puede venir de una agencia (con cargos o cambios más difíciles).</p></div>
+      ${tarjetas}
+      <a class="btn plain" href="${esc(K.link)}" target="_blank" rel="noopener noreferrer">Ver estas opciones en Kayak ↗</a>
+      <div class="gfoot">En Kayak, antes de pagar, elige si puedes la opción que dice el nombre de la aerolínea (venta directa) y no una agencia.</div>`;
   }
   function minutos(s) { const h = (s.match(/(\d+) h/) || [])[1] || 0, m = (s.match(/(\d+) min/) || [])[1] || 0; return h * 60 + +m; }
   function tarjeta(v, mejor, rapido, P) {
