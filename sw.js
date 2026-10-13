@@ -1,5 +1,5 @@
 // Service worker: permite instalar la app y abrirla sin internet con los últimos datos.
-const CACHE = "vuelos-v9";
+const CACHE = "vuelos-v10";
 const ARCHIVOS = ["./", "./index.html", "./styles.css", "./app.js", "./config.js", "./manifest.webmanifest", "./buscar.js", "./aeropuertos.json",
   "./icons/asientos-192.png", "./icons/asientos-512.png", "./icons/asientos-favicon.png"];
 
@@ -15,7 +15,8 @@ self.addEventListener("fetch", (e) => {
   if (e.request.method !== "GET") return;
   // Red primero: siempre la última versión de la app; el caché es respaldo sin internet.
   e.respondWith(
-    fetch(e.request).then((resp) => {
+    // no-cache: siempre pregunta al servidor si hay una versión nueva (GitHub deja guardar 10 min).
+    fetch(new Request(e.request, { cache: "no-cache" })).then((resp) => {
       const copia = resp.clone();
       caches.open(CACHE).then((c) => c.put(e.request, copia)).catch(() => {});
       return resp;
