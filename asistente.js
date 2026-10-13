@@ -144,28 +144,66 @@
       `Salidas del ${fCorta(r.desde)} al ${fCorta(sumar(r.desde, r.dias - 1))} · ${r.modo === 'ow' ? 'solo ida' : r.noches + ' noches'} · ${pax} · ${{ turista: 'Turista', premium: 'Premium', ejecutiva: 'Ejecutiva' }[r.clase]}`;
   }
 
+  // El mes se pide en trozos de 8 días, 4 a la vez: cada respuesta llega en ~25 s.
+  // (Una sola petición de 90 s la corta la red del celular: "Failed to fetch".)
+  async function pedirTrozo(r, desde, dias) {
+    const q = new URLSearchParams({ clave: conf.key, accion: 'mes', origen: r.origen || 'SCL', destino: r.destino, desde, dias, noches: r.modo === 'ow' ? '' : r.noches, clase: r.clase });
+    for (let intento = 0; intento < 2; intento++) {
+      try {
+        const j = await (await fetch(conf.url + (conf.url.includes('?') ? '&' : '?') + q.toString())).json();
+        if (!j.ok) throw new Error(j.error === 'clave' ? 'la clave no coincide' : (j.error || 'sin respuesta'));
+        return j;
+      } catch (err) {
+        if (intento === 1 || /clave/.test(err.message)) throw err;
+        await new Promise(res => setTimeout(res, 1500));
+      }
+    }
+  }
   async function buscarMes(r) {
     if (!conf.url || !conf.key) { bot('Primero configura la conexión en Ajustes (⚙︎).'); return; }
     const k = 'r' + Date.now();
+    const trozos = [];
+    for (let i = 0; i < r.dias; i += 8) trozos.push({ desde: sumar(r.desde, i), dias: Math.min(8, r.dias - i) });
     bot(`Entendí:<br>${resumen(r)}${r.notas.length ? '<div class="nota">' + r.notas.map(esc).join('<br>') + '</div>' : ''}
-      <div class="cargando-mini" id="chEspera"><svg class="avion" viewBox="0 0 24 24" fill="#ffc98b" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
-      <span>Buscando el precio de cada día en todas las aerolíneas… tarda 1 a 2 minutos. <b id="chSeg">0 s</b></span></div>`);
+      <div class="cargando-mini"><svg class="avion" viewBox="0 0 24 24" fill="#ffc98b" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+      <span>Buscando el precio de cada día en todas las aerolíneas… <b id="chProg">0 de ${r.dias} días</b> · <b id="chSeg">0 s</b><br>Deja la app abierta; tarda menos de 1 minuto.</span></div>`);
     const t0 = Date.now(); const reloj = setInterval(() => { const e = $('chSeg'); if (e) e.textContent = Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
+    let listos = 0, todosMemoria = true, errores = 0;
+    const dias = [];
+    const cola = trozos.slice();
+    const trabajador = async () => {
+      while (cola.length) {
+        const t = cola.shift();
+        try {
+          const j = await pedirTrozo(r, t.desde, t.dias);
+          dias.push(...j.dias); if (!j.desdeMemoria) todosMemoria = false;
+        } catch (err) {
+          errores++;
+          if (/clave/.test(err.message)) throw err;
+          for (let i = 0; i < t.dias; i++) { const ida = sumar(t.desde, i); dias.push({ ida, vuelta: r.modo === 'ow' ? '' : sumar(ida, r.noches) }); }
+        }
+        listos += t.dias;
+        const e = $('chProg'); if (e) e.textContent = `${Math.min(listos, r.dias)} de ${r.dias} días`;
+      }
+    };
     try {
-      const q = new URLSearchParams({ clave: conf.key, accion: 'mes', origen: r.origen || 'SCL', destino: r.destino, desde: r.desde, dias: r.dias, noches: r.modo === 'ow' ? '' : r.noches, clase: r.clase });
-      const j = await (await fetch(conf.url + (conf.url.includes('?') ? '&' : '?') + q.toString())).json();
+      await Promise.all([trabajador(), trabajador(), trabajador(), trabajador()]);
       clearInterval(reloj);
-      if (!j.ok) throw new Error(j.error === 'clave' ? 'la clave no coincide' : (j.error || 'sin respuesta'));
+      dias.sort((x, y) => x.ida < y.ida ? -1 : 1);
+      if (!dias.some(d => d.min)) throw new Error(errores ? 'la conexión se cortó' : 'no encontré vuelos para esas fechas');
+      const j = { ok: true, dias, desdeMemoria: todosMemoria };
       HIST.pop(); // reemplaza el mensaje de espera
       const busq = { r, j }; try { localStorage.setItem('chat-' + k, JSON.stringify(busq)); } catch (e) {}
       ULTIMO = { k, ...busq };
-      bot(`Entendí:<br>${resumen(r)}${r.notas.length ? '<div class="nota">' + r.notas.map(esc).join('<br>') + '</div>' : ''}` + calendario(k, r, j));
+      const aviso = errores ? '<div class="nota">Algunos días no cargaron (se ven con —). Puedes repetir la búsqueda para completarlos.</div>' : '';
+      bot(`Entendí:<br>${resumen(r)}${r.notas.length ? '<div class="nota">' + r.notas.map(esc).join('<br>') + '</div>' : ''}${aviso}` + calendario(k, r, j));
     } catch (err) {
       clearInterval(reloj);
       HIST.pop();
-      bot(`No pude terminar la búsqueda: ${esc(err.message)}. Inténtalo de nuevo en un momento.`);
+      bot(`No pude terminar la búsqueda: ${esc(err.message)}. Revisa tu conexión e inténtalo de nuevo.`);
     }
   }
+
 
   // Elijo el día más conveniente: el más barato, prefiriendo salir martes o miércoles y evitando salir viernes o volver domingo.
   function recomendar(r, dias) {
