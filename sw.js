@@ -1,5 +1,5 @@
 // Service worker: permite instalar la app y abrirla sin internet con los últimos datos.
-const CACHE = "vuelos-v8";
+const CACHE = "vuelos-v9";
 const ARCHIVOS = ["./", "./index.html", "./styles.css", "./app.js", "./config.js", "./manifest.webmanifest", "./buscar.js", "./aeropuertos.json",
   "./icons/asientos-192.png", "./icons/asientos-512.png", "./icons/asientos-favicon.png"];
 

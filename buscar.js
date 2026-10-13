@@ -12,11 +12,12 @@
   const hoyIso = () => { const d = new Date(); return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12)).toISOString().slice(0, 10); };
 
   // ---------- estado (se recuerda en el teléfono)
-  let B = { modo: 'rt', destino: null, ida: null, vuelta: null, a: 2, n: 0, b: 0, clase: 'turista' };
+  let B = { modo: 'rt', origen: { iata: 'SCL', ciudad: 'Santiago', aeropuerto: 'Arturo Merino Benítez', pais: 'Chile', cc: 'CL' }, destino: null, ida: null, vuelta: null, a: 2, n: 0, b: 0, clase: 'turista' };
   try { Object.assign(B, JSON.parse(localStorage.getItem('busqueda') || '{}')); } catch (e) {}
   if (B.ida && B.ida < hoyIso()) { B.ida = null; B.vuelta = null; }
   const guardar = () => { try { localStorage.setItem('busqueda', JSON.stringify(B)); } catch (e) {} };
-  let AEROS = null, PAISES = [], PAIS_DE = {}, RES = null, SEL = 0, FILTRO = 'todos';
+  let AEROS = null, PAISES = [], PAIS_DE = {}, RES = null, SEL = 0, FILTRO = 'todos', ELIGIENDO = 'destino';
+  const ORI = () => B.origen || { iata: 'SCL', ciudad: 'Santiago', pais: 'Chile', cc: 'CL' };
 
   // ---------- pantallas internas
   const PANT = ['home', 'pais', 'ciudad', 'fechas', 'personas', 'res'];
@@ -40,6 +41,7 @@
   }
   function noches() { return B.ida && B.vuelta ? Math.round((D(B.vuelta) - D(B.ida)) / 864e5) : 0; }
   function pintarHome() {
+    $('bsOrigenTxt').textContent = `${ORI().pais} · ${ORI().ciudad} ${ORI().iata}`;
     const d = $('bsDestinoTxt');
     d.textContent = B.destino ? `${B.destino.pais} · ${B.destino.ciudad} ${B.destino.iata}` : 'Elige país y ciudad';
     d.classList.toggle('vacio', !B.destino);
@@ -56,7 +58,9 @@
   }
   function cambiarModo(m) { B.modo = m; if (m === 'ow') B.vuelta = null; guardar(); pintarHome(); pintarMeses(); }
   ['bsModo', 'bsModo2'].forEach(id => $(id).querySelectorAll('button').forEach(b => b.onclick = () => cambiarModo(b.dataset.m)));
-  $('bsDestino').onclick = () => { ver('pais'); cargarPaises(); };
+  $('bsDestino').onclick = () => { ELIGIENDO = 'destino'; $('bsPaisTitulo').textContent = '¿A qué país?'; ver('pais'); cargarPaises(); };
+  $('bsOrigen').onclick = () => { ELIGIENDO = 'origen'; $('bsPaisTitulo').textContent = '¿Desde qué país?'; ver('pais'); cargarPaises(); };
+  $('bsInvertir').onclick = () => { if (!B.destino) return; const o = ORI(); B.origen = B.destino; B.destino = o; guardar(); pintarHome(); };
   $('bsFechas').onclick = () => { ver('fechas'); pintarMeses(); };
   $('bsPersonas').onclick = () => { ver('personas'); pintarPersonas(); };
   $('bsBuscar').onclick = () => buscar();
@@ -66,10 +70,10 @@
   function pintarRecientes() {
     const L = recientes();
     $('bsRecG').hidden = !L.length;
-    $('bsRec').innerHTML = L.map((r, i) => `<button type="button" class="reciente glass" data-i="${i}"><span class="r1">SCL → ${esc(r.destino.iata)}</span><span class="r2">${esc(r.destino.ciudad)}</span><span class="r3">${esc(fCorta(r.ida))}${r.vuelta ? ' → ' + esc(fCorta(r.vuelta)) : ''}</span>${r.min ? `<span class="r3" style="color:var(--ok);font-weight:800">desde ${CLP(r.min)} c/u</span>` : ''}</button>`).join('');
+    $('bsRec').innerHTML = L.map((r, i) => `<button type="button" class="reciente glass" data-i="${i}"><span class="r1">${esc((r.origen || ORI()).iata)} → ${esc(r.destino.iata)}</span><span class="r2">${esc(r.destino.ciudad)}</span><span class="r3">${esc(fCorta(r.ida))}${r.vuelta ? ' → ' + esc(fCorta(r.vuelta)) : ''}</span>${r.min ? `<span class="r3" style="color:var(--ok);font-weight:800">desde ${CLP(r.min)} c/u</span>` : ''}</button>`).join('');
     $('bsRec').querySelectorAll('[data-i]').forEach(b => b.onclick = () => {
       const r = L[+b.dataset.i];
-      Object.assign(B, { destino: r.destino, ida: r.ida < hoyIso() ? null : r.ida, vuelta: r.ida < hoyIso() ? null : r.vuelta, modo: r.vuelta ? 'rt' : 'ow' });
+      Object.assign(B, { origen: r.origen || ORI(), destino: r.destino, ida: r.ida < hoyIso() ? null : r.ida, vuelta: r.ida < hoyIso() ? null : r.vuelta, modo: r.vuelta ? 'rt' : 'ow' });
       guardar(); pintarHome();
       if (B.ida) buscar();
     });
@@ -127,11 +131,17 @@
     ver('ciudad');
   }
   function elegirCiudad(iata, cc) {
+    if (ELIGIENDO === 'destino' && iata === ORI().iata) { alertaMismo(); return; }
+    if (ELIGIENDO === 'origen' && B.destino && iata === B.destino.iata) { alertaMismo(); return; }
     const a = (AEROS[cc] || []).find(x => x[0] === iata);
-    B.destino = { iata, ciudad: a ? a[1] : iata, aeropuerto: a ? a[2] : '', pais: nomPais(cc), cc };
+    const lugar = { iata, ciudad: a ? a[1] : iata, aeropuerto: a ? a[2] : '', pais: nomPais(cc), cc };
+    if (ELIGIENDO === 'origen') { B.origen = lugar; guardar(); ver('home'); return; }
+    B.destino = lugar;
     guardar();
     ver(B.ida ? 'home' : 'fechas'); if (!B.ida) pintarMeses();
   }
+
+  function alertaMismo() { const e = document.createElement('div'); e.className = 'hero'; e.innerHTML = '<p>El origen y el destino no pueden ser el mismo aeropuerto.</p>'; const v = $('bs-ciudad').hidden ? $('bs-pais') : $('bs-ciudad'); v.prepend(e); setTimeout(() => e.remove(), 2500); }
 
   // ---------- fechas (como LATAM: se toca la ida y luego la vuelta)
   function pintarMeses() {
@@ -224,9 +234,9 @@
   // ---------- búsqueda y resultados
   async function buscar() {
     if (!conf.url || !conf.key) { $('bsMsg').textContent = 'Primero configura la conexión en Ajustes (⚙︎).'; return; }
-    const q = { origen: 'SCL', destino: B.destino.iata, ida: B.ida, vuelta: B.modo === 'rt' ? B.vuelta : '', clase: B.clase };
+    const q = { origen: ORI().iata, destino: B.destino.iata, ida: B.ida, vuelta: B.modo === 'rt' ? B.vuelta : '', clase: B.clase };
     ver('res');
-    $('bsResRuta').textContent = `SCL → ${B.destino.iata} · ${B.destino.ciudad}`;
+    $('bsResRuta').textContent = `${ORI().iata} → ${B.destino.iata} · ${B.destino.ciudad}`;
     $('bsResInfo').textContent = `${fCorta(B.ida)}${q.vuelta ? ' – ' + fCorta(q.vuelta) + ' · ' + noches() + ' noches' : ' · solo ida'} · ${txtPersonas()}`;
     $('bsResCuerpo').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#ffc98b" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Buscando en todas las aerolíneas…</b><span class="gfoot">Reviso tu fecha y 3 días antes y después. Tarda unos 20 segundos.</span></div>`;
     if (!AEROS) { try { AEROS = await (await fetch('aeropuertos.json')).json(); Object.keys(AEROS).forEach(cc => AEROS[cc].forEach(a => PAIS_DE[a[0]] = cc)); } catch (e) {} }
@@ -239,8 +249,8 @@
       const conPrecio = RES.fechas.filter(f => f.min);
       // guardar en recientes
       const min = conPrecio.length ? Math.min(...conPrecio.map(f => f.min)) : null;
-      const L = recientes().filter(r => !(r.destino.iata === B.destino.iata && r.ida === B.ida && (r.vuelta || '') === (q.vuelta || '')));
-      L.unshift({ destino: B.destino, ida: B.ida, vuelta: q.vuelta, min });
+      const L = recientes().filter(r => !(r.destino.iata === B.destino.iata && (r.origen || ORI()).iata === ORI().iata && r.ida === B.ida && (r.vuelta || '') === (q.vuelta || '')));
+      L.unshift({ origen: ORI(), destino: B.destino, ida: B.ida, vuelta: q.vuelta, min });
       try { localStorage.setItem('recientes', JSON.stringify(L.slice(0, 8))); } catch (e) {}
       pintarRes();
     } catch (err) {
@@ -299,7 +309,7 @@
       : `<span class="gfoot" style="padding:0">${esc(v.directo ? 'Directo' : v.paradas)}</span>`;
     return `<div class="vcard glass ${mejor ? 'mejor' : ''}">
       <div class="top">${etiqueta}<span class="aer">${esc(v.aerolinea)}</span></div>
-      <div class="leg"><div><div class="t">${esc(v.sale)}</div><div class="c">SCL</div></div>
+      <div class="leg"><div><div class="t">${esc(v.sale)}</div><div class="c">${esc(ORI().iata)}</div></div>
         <div class="mid">${esc(v.duracion)}<span class="rule"></span>${esc(v.directo ? 'Directo' : (v.paradas + (v.escalaTexto ? ' · ' + v.escalaTexto : '')))}</div>
         <div style="text-align:right"><div class="t">${esc(v.llega)}${v.masDias ? `<sup style="font-size:11px">+${v.masDias}</sup>` : ''}</div><div class="c">${esc(B.destino.iata)}</div></div></div>
       ${ex.map(([k, t]) => `<div class="extra ${k === 'ok' ? 'ok' : 'ojo'}"><span>${k === 'ok' ? '✓' : k === 'info' ? 'ℹ' : '⚠'}</span><span>${esc(t)}</span></div>`).join('')}
