@@ -43,7 +43,7 @@ function cellOferta(o,showDest=true){const w=MIS.find(m=>m.iata===o.iata),hit=w&
   return `<button type="button" class="cell ic" data-open="${esc(o.id)}">
     <span class="tile" style="background:${TILE[o.aerolinea]||'var(--teal)'}">${esc((o.aerolinea||'?').slice(0,2).toUpperCase())}</span>
     <span class="body"><span class="title">${esc(showDest?o.destino:o.aerolinea)}</span>
-      <span class="detail" style="display:block">${showDest?esc(o.aerolinea)+' · ':''}${o.tipo==='ida'?'precio por tramo':'ida y vuelta'}${o.ida?` · ${fdate(o.ida)}${o.vuelta?' → '+fdate(o.vuelta):''}`:''}</span>
+      <span class="detail" style="display:block">${showDest?esc(o.aerolinea)+' · ':''}${o.tipo==='ida'?'precio por tramo':'ida y vuelta'}${o.ida?` · ${fdate(o.ida)}${o.vuelta?' → '+fdate(o.vuelta):''}${o.fechasSugeridas?' (sugeridas)':''}`:''}</span>
       <span>${trend(o)}${hit?'<span class="badge b-green">Bajo tu precio</span>':''}${o.promo?`<span class="badge b-orange">${esc(o.promo)}</span>`:''}</span></span>
     <span class="right"><b class="mono">${showDest?CLP(total2(o)):CLP(ppRT(o))}</b><span class="mono">${showDest?CLP(o.precio)+' c/u':'por persona i/v'}</span>${showDest?spark(o.hist):''}</span>${CHEV}</button>`}
 
@@ -99,7 +99,7 @@ function drawDet(o){
     <dl class="kv" style="margin:10px 0 0">
       <dt>Por persona${o.tipo==='ida'?' (un tramo)':''}</dt><dd class="mono">${CLP(o.precio)}</dd>
       <dt>Total ${NP()} ${NP()===1?'persona':'personas'} ida y vuelta</dt><dd class="mono" style="font-size:18px">${CLP(total2(o))}</dd>
-      ${o.ida?`<dt>Fechas de la oferta</dt><dd>${fdate(o.ida)}${o.vuelta?' → '+fdate(o.vuelta):''}</dd>`:''}
+      ${o.ida?`<dt>${o.fechasSugeridas?'Fechas sugeridas (la oferta no trae fechas)':'Fechas de la oferta'}</dt><dd>${fdate(o.ida)}${o.vuelta?' → '+fdate(o.vuelta):''}</dd>`:''}
       ${enFecha?`<dt>Ida ese día (calendario)</dt><dd class="mono">${CLP(enFecha.p)} c/u</dd>`:''}
     </dl>
     <div>${trend(o)}${crowd?'<span class="badge b-red">Viernes o domingo: más lleno</span>':''}</div>
