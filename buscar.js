@@ -295,6 +295,7 @@
       <div class="gfoot">${fCorta(f.ida)}${f.vuelta ? ' – ' + fCorta(f.vuelta) : ''} · ${vuelos.length} ${vuelos.length === 1 ? "vuelo" : "vuelos"} · <b style="color:#fff">total final para ${P} ${P === 1 ? 'persona' : 'personas'}</b>, con tasas e impuestos${bebeTxt}.</div>
       ${vuelos.length ? vuelos.map((v, i) => tarjeta(v, i === 0 && FILTRO === 'todos', v === masRapido, P) + (/latam/i.test(v.aerolinea) ? bloqueMillas(v, f, i) : '')).join('') : '<div class="empty glass" style="border-radius:24px">No hay vuelos con estos filtros para esta fecha. Prueba otra hora u otro día en las barras de arriba.</div>'}
       ${f.link ? `<a class="btn plain" href="${esc(f.link)}" target="_blank" rel="noopener noreferrer">Ver en Google Flights</a>` : ''}
+      ${agencias(f)}
       <div class="gfoot">Precios de Google Flights para 1 adulto multiplicados por ${P}, con tasas de embarque e impuestos obligatorios. Google muestra el precio más bajo publicado; a veces viene de una agencia. Por eso el botón te lleva siempre al <b>sitio oficial de la aerolínea</b>, sin intermediarios ni comisiones: ahí confirmas el precio final antes de pagar. En Google Flights, elige siempre la opción "Reservar con la aerolínea".</div>`;
     $('bsBarras').querySelectorAll('[data-i]').forEach(b => b.onclick = () => { SEL = +b.dataset.i; pintarRes(); });
     $('bsResCuerpo').querySelectorAll('[data-millas]').forEach(inp => inp.addEventListener('input', () => {
@@ -416,6 +417,22 @@
       ${tarjetas}
       <a class="btn plain" href="${esc(K.link)}" target="_blank" rel="noopener noreferrer">Ver estas opciones en Kayak ↗</a>
       <div class="gfoot">En Kayak, antes de pagar, elige si puedes la opción que dice el nombre de la aerolínea (venta directa) y no una agencia.</div>`;
+  }
+  // ---------- agencias: botones con la búsqueda ya rellenada (bloquean la lectura automática)
+  function agencias(f) {
+    const o = ORI().iata, d = B.destino.iata, ida = f.ida, vta = f.vuelta, A = B.a, N = B.n, BB = B.b;
+    const plataforma = dom => vta ? `https://www.${dom}/shop/flights/results/roundtrip/${o}/${d}/${ida}/${vta}/${A}/${N}/${BB}`
+                                    : `https://www.${dom}/shop/flights/results/oneway/${o}/${d}/${ida}/${A}/${N}/${BB}`;
+    const edreams = `https://www.edreams.cl/travel/#results/type=${vta ? 'R' : 'O'};dep=${ida};from=${o};to=${d};${vta ? 'ret=' + vta + ';' : ''}collectionmethod=false;airlinescodes=false;internalSearch=true;adults=${A};children=${N};infants=${BB}`;
+    const L = [
+      ['Despegar', plataforma('despegar.cl'), 'búsqueda lista'],
+      ['Viajes Falabella', plataforma('viajesfalabella.cl'), 'búsqueda lista'],
+      ['eDreams', edreams, 'búsqueda lista'],
+      ['Mytrip', 'https://cl.mytrip.com/', 'ingresa la ruta y fechas']
+    ];
+    return `<div class="group"><div class="ghead">Revisar también en agencias</div>
+      <div class="agencias">${L.map(([n, u, t]) => `<a class="ag glass" href="${esc(u)}" target="_blank" rel="noopener noreferrer"><b>${n} ↗</b><small>${t}</small></a>`).join('')}</div>
+      <div class="gfoot">Las agencias cobran cargo de gestión y bloquean la lectura automática, por eso se abren aparte. Compara su <b>total final</b> (con cargos) contra el de la aerolínea antes de pagar.</div></div>`;
   }
   function minutos(s) { const h = (s.match(/(\d+) h/) || [])[1] || 0, m = (s.match(/(\d+) min/) || [])[1] || 0; return h * 60 + +m; }
   function tarjeta(v, mejor, rapido, P) {
