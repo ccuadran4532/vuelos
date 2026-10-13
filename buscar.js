@@ -423,11 +423,11 @@
     const o = ORI().iata, d = B.destino.iata, ida = f.ida, vta = f.vuelta, A = B.a, N = B.n, BB = B.b;
     const plataforma = dom => vta ? `https://www.${dom}/shop/flights/results/roundtrip/${o}/${d}/${ida}/${vta}/${A}/${N}/${BB}`
                                     : `https://www.${dom}/shop/flights/results/oneway/${o}/${d}/${ida}/${A}/${N}/${BB}`;
-    const edreams = `https://www.edreams.cl/travel/#results/type=${vta ? 'R' : 'O'};dep=${ida};from=${o};to=${d};${vta ? 'ret=' + vta + ';' : ''}collectionmethod=false;airlinescodes=false;internalSearch=true;adults=${A};children=${N};infants=${BB}`;
+    const edreams = `https://www.edreams.com/travel/#results/type=${vta ? 'R' : 'O'};dep=${ida};from=${o};to=${d};${vta ? 'ret=' + vta + ';' : ''}collectionmethod=false;airlinescodes=false;internalSearch=true;adults=${A};children=${N};infants=${BB}`;
     const L = [
       ['Despegar', plataforma('despegar.cl'), 'búsqueda lista'],
       ['Viajes Falabella', plataforma('viajesfalabella.cl'), 'búsqueda lista'],
-      ['eDreams', edreams, 'búsqueda lista'],
+      ['eDreams', edreams, 'búsqueda lista · precios en euros'],
       ['Mytrip', 'https://cl.mytrip.com/', 'ingresa la ruta y fechas']
     ];
     return `<div class="group"><div class="ghead">Revisar también en agencias</div>
