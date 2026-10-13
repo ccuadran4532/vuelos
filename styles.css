@@ -1,10 +1,10 @@
 /* Vuelos — estilo vidrio translúcido (diseño aprobado por Carlos, lienzo "App de viajes — estilo glass").
    Fondo azul profundo con luces, tarjetas de vidrio, tipografía Manrope, acento celeste y butacas doradas. */
 :root{
-  --sky:#0f3a7a; --sky2:#0b2452; --glow1:#2f7bff; --glow2:#8b5cf6; --glow3:#1bb8c9;
+  --sky:#161a3c; --sky2:#0e1130; --glow1:#6a5cff; --glow2:#ff7a5c; --glow3:#16b8a6;
   --label:#ffffff; --label2:rgba(255,255,255,.74); --label3:rgba(255,255,255,.45);
   --glass:rgba(255,255,255,.14); --glass2:rgba(255,255,255,.22); --line:rgba(255,255,255,.35); --sep:rgba(255,255,255,.14);
-  --tint:#9fe1ff; --tintInk:#0b1a33; --ok:#7DF0B0; --warn:#FFD27A; --bad:#FF9A9A; --gold:#E9C46A;
+  --tint:#ffc98b; --tintInk:#2b1605; --ok:#7DF0B0; --warn:#FFD27A; --bad:#FF9A9A; --gold:#E9C46A;
   --font:Manrope,"Segoe UI",system-ui,sans-serif;
   color-scheme:dark;
 }
@@ -20,8 +20,8 @@ button,input,select{font-family:var(--font)}
 /* luces de fondo */
 .luces{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}
 .luces i{position:absolute;border-radius:50%;filter:blur(70px)}
-.luces i:nth-child(1){width:440px;height:440px;left:-160px;top:-150px;background:var(--glow1);opacity:.85}
-.luces i:nth-child(2){width:380px;height:380px;right:-170px;top:42%;background:var(--glow2);opacity:.7}
+.luces i:nth-child(1){width:440px;height:440px;left:-160px;top:-150px;background:var(--glow1);opacity:.75}
+.luces i:nth-child(2){width:380px;height:380px;right:-170px;top:38%;background:var(--glow2);opacity:.55}
 .luces i:nth-child(3){width:320px;height:320px;left:10%;bottom:-160px;background:var(--glow3);opacity:.55}
 
 /* vidrio */
@@ -66,7 +66,7 @@ button.cell:active,a.cell:active{background:rgba(255,255,255,.08)}
 .b-green{background:rgba(125,240,176,.18);color:var(--ok);border-color:rgba(125,240,176,.4)}
 .b-red{background:rgba(255,154,154,.18);color:var(--bad);border-color:rgba(255,154,154,.4)}
 .b-orange{background:rgba(255,210,122,.18);color:var(--warn);border-color:rgba(255,210,122,.4)}
-.b-blue{background:rgba(159,225,255,.18);color:var(--tint);border-color:rgba(159,225,255,.4)}
+.b-blue{background:rgba(255,201,139,.18);color:var(--tint);border-color:rgba(255,201,139,.45)}
 .hero{border-radius:24px;padding:16px 18px;display:grid;gap:6px}
 .hero .k{font-size:12px;font-weight:800;color:var(--tint);text-transform:uppercase;letter-spacing:.05em}
 .hero p{margin:0;font-size:15px;line-height:1.45}
@@ -183,7 +183,7 @@ table.bag th{color:var(--label2);font-weight:700}
 .dow{font-size:11px;font-weight:700;color:var(--label2);text-align:center;padding-bottom:2px}
 .dia{height:40px;display:grid;place-items:center;font:700 14px var(--font);border:0;background:transparent;color:#fff;cursor:pointer;padding:0}
 .dia:disabled{color:rgba(255,255,255,.25);cursor:default}
-.dia.in{background:rgba(159,225,255,.22)}
+.dia.in{background:rgba(255,201,139,.22)}
 .dia.ini{background:var(--tint);color:var(--tintInk);font-weight:800;border-radius:12px 0 0 12px}
 .dia.fin{background:var(--tint);color:var(--tintInk);font-weight:800;border-radius:0 12px 12px 0}
 .dia.ini.fin,.dia.solo{background:var(--tint);color:var(--tintInk);border-radius:12px}

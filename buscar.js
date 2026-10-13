@@ -228,7 +228,7 @@
     ver('res');
     $('bsResRuta').textContent = `SCL → ${B.destino.iata} · ${B.destino.ciudad}`;
     $('bsResInfo').textContent = `${fCorta(B.ida)}${q.vuelta ? ' – ' + fCorta(q.vuelta) + ' · ' + noches() + ' noches' : ' · solo ida'} · ${txtPersonas()}`;
-    $('bsResCuerpo').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#9fe1ff" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Buscando en todas las aerolíneas…</b><span class="gfoot">Reviso tu fecha y 3 días antes y después. Tarda unos 20 segundos.</span></div>`;
+    $('bsResCuerpo').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#ffc98b" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Buscando en todas las aerolíneas…</b><span class="gfoot">Reviso tu fecha y 3 días antes y después. Tarda unos 20 segundos.</span></div>`;
     if (!AEROS) { try { AEROS = await (await fetch('aeropuertos.json')).json(); Object.keys(AEROS).forEach(cc => AEROS[cc].forEach(a => PAIS_DE[a[0]] = cc)); } catch (e) {} }
     try {
       const u = conf.url + (conf.url.includes('?') ? '&' : '?') + 'clave=' + encodeURIComponent(conf.key) + '&accion=buscar&flex=3&' + new URLSearchParams(q).toString();
@@ -277,11 +277,20 @@
       </div>
       <div class="gfoot">${fCorta(f.ida)}${f.vuelta ? ' – ' + fCorta(f.vuelta) : ''} · ${vuelos.length} vuelos · <b style="color:#fff">total final para ${P} ${P === 1 ? 'persona' : 'personas'}</b>, con tasas e impuestos${bebeTxt}.</div>
       ${vuelos.length ? vuelos.map((v, i) => tarjeta(v, i === 0 && FILTRO === 'todos', v === masRapido, P)).join('') : '<div class="empty glass" style="border-radius:24px">No hay vuelos con este filtro para esta fecha.</div>'}
-      ${f.link ? `<a class="btn plain" href="${esc(f.link)}" target="_blank" rel="noopener noreferrer">Ver y comprar en Google Flights</a>` : ''}
-      <div class="gfoot">Precios de Google Flights para 1 adulto multiplicados por ${P}. Incluyen tasas de embarque e impuestos obligatorios. El equipaje en bodega depende de la tarifa: revísalo al comprar. Para comprar se abre la página, porque el pago lo hace la aerolínea o la agencia.</div>`;
+      ${f.link ? `<a class="btn plain" href="${esc(f.link)}" target="_blank" rel="noopener noreferrer">Ver en Google Flights</a>` : ''}
+      <div class="gfoot">Precios de Google Flights para 1 adulto multiplicados por ${P}, con tasas de embarque e impuestos obligatorios. Google muestra el precio más bajo publicado; a veces viene de una agencia. Por eso el botón te lleva siempre al <b>sitio oficial de la aerolínea</b>, sin intermediarios ni comisiones: ahí confirmas el precio final antes de pagar. En Google Flights, elige siempre la opción "Reservar con la aerolínea".</div>`;
     $('bsBarras').querySelectorAll('[data-i]').forEach(b => b.onclick = () => { SEL = +b.dataset.i; pintarRes(); });
     $('bsFiltros').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FILTRO = b.dataset.f; pintarRes(); });
   }
+  // Sitios oficiales: para comprar sin agencias ni comisiones.
+  const OFICIAL = [['LATAM','https://www.latamairlines.com/cl/es'],['Iberia','https://www.iberia.com/cl/'],['Air Canada','https://www.aircanada.com/cl/es/'],['Avianca','https://www.avianca.com/cl/es/'],
+    ['American','https://www.aa.com/homePage.do?locale=es_CL'],['Delta','https://es.delta.com/'],['United','https://www.united.com/es/cl/'],['Copa','https://www.copaair.com/es-cl/'],
+    ['Aerolíneas Argentinas','https://www.aerolineas.com.ar/'],['British Airways','https://www.britishairways.com/'],['Air France','https://wwws.airfrance.cl/'],['KLM','https://www.klm.cl/'],
+    ['LEVEL','https://www.flylevel.com/'],['SKY','https://www.skyairline.com/es/chile'],['JetSMART','https://jetsmart.com/cl/es/'],['Air Europa','https://www.aireuropa.com/cl/es/'],
+    ['Aeroméxico','https://aeromexico.com/es-cl'],['GOL','https://www.voegol.com.br/es'],['Azul','https://www.voeazul.com.br/'],['TAP','https://www.flytap.com/es-cl/'],
+    ['Lufthansa','https://www.lufthansa.com/cl/es/'],['Turkish','https://www.turkishairlines.com/es-cl/'],['Emirates','https://www.emirates.com/cl/spanish/'],['Qatar','https://www.qatarairways.com/es-cl/'],
+    ['Swiss','https://www.swiss.com/cl/es'],['ITA','https://www.ita-airways.com/es_cl'],['Qantas','https://www.qantas.com/'],['Air New Zealand','https://www.airnewzealand.com/'],['Arajet','https://www.arajet.com/es']];
+  function oficial(aer) { const p = (aer || '').split(/[·,]/)[0].trim().toLowerCase(); const o = OFICIAL.find(([n]) => p.startsWith(n.toLowerCase())); return o ? { nombre: o[0], url: o[1] } : null; }
   function minutos(s) { const h = (s.match(/(\d+) h/) || [])[1] || 0, m = (s.match(/(\d+) min/) || [])[1] || 0; return h * 60 + +m; }
   function tarjeta(v, mejor, rapido, P) {
     const ex = extras(v, B.destino.cc);
@@ -295,6 +304,7 @@
         <div style="text-align:right"><div class="t">${esc(v.llega)}${v.masDias ? `<sup style="font-size:11px">+${v.masDias}</sup>` : ''}</div><div class="c">${esc(B.destino.iata)}</div></div></div>
       ${ex.map(([k, t]) => `<div class="extra ${k === 'ok' ? 'ok' : 'ojo'}"><span>${k === 'ok' ? '✓' : k === 'info' ? 'ℹ' : '⚠'}</span><span>${esc(t)}</span></div>`).join('')}
       <div class="vprecio"><span class="pp">${CLP(v.precio)} por persona<br>tasas incluidas · equipaje según tarifa</span><span class="tot"><b>${CLP(v.precio * P)}</b><span>total ${P} ${P === 1 ? 'persona' : 'personas'}</span></span></div>
+      ${(o => o ? `<a class="btn plain" style="padding:11px;font-size:15px" href="${o.url}" target="_blank" rel="noopener noreferrer">Comprar directo en ${esc(o.nombre)} ↗</a>` : '')(oficial(v.aerolinea))}
     </div>`;
   }
 
