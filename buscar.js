@@ -310,7 +310,7 @@
     ['Aeroméxico','https://aeromexico.com/es-cl'],['GOL','https://www.voegol.com.br/es'],['Azul','https://www.voeazul.com.br/'],['TAP','https://www.flytap.com/es-cl/'],
     ['Lufthansa','https://www.lufthansa.com/cl/es/'],['Turkish','https://www.turkishairlines.com/es-cl/'],['Emirates','https://www.emirates.com/cl/spanish/'],['Qatar','https://www.qatarairways.com/es-cl/'],
     ['Swiss','https://www.swiss.com/cl/es'],['ITA','https://www.ita-airways.com/es_cl'],['Qantas','https://www.qantas.com/'],['Air New Zealand','https://www.airnewzealand.com/'],['Arajet','https://www.arajet.com/es']];
-  function oficial(aer) { const p = (aer || '').split(/[·,]/)[0].trim().toLowerCase(); const o = OFICIAL.find(([n]) => p.startsWith(n.toLowerCase())); return o ? { nombre: o[0], url: o[1] } : null; }
+  function oficial(aer) { const p = (aer || '').replace(/Jet · SMART/g, 'JetSMART').split(/[·,]/)[0].trim().toLowerCase(); const o = OFICIAL.find(([n]) => p.startsWith(n.toLowerCase())); return o ? { nombre: o[0], url: o[1] } : null; }
   // Millas LATAM Pass: LATAM solo muestra millas con la cuenta iniciada, así que abrimos su búsqueda de canje ya rellenada.
   function linkMillas(f) {
     const p = new URLSearchParams({ origin: ORI().iata, outbound: f.ida + 'T15:00:00.000Z', destination: B.destino.iata, adt: B.a, chd: B.n, inf: B.b,
@@ -344,5 +344,13 @@
     </div>`;
   }
 
+  // El asistente elige la fecha y trae al usuario aquí para ver los vuelos y comprar.
+  window.vuelosIrABuscar = p => {
+    Object.assign(B, { origen: p.origen, destino: p.destino, ida: p.ida, vuelta: p.vuelta || null, modo: p.modo, a: p.a, n: p.n, b: p.b, clase: p.clase });
+    guardar();
+    const btn = document.querySelector('.tabbar button[data-v="buscar"]'); if (btn) btn.click();
+    pintarHome(); buscar();
+  };
+  $('bsBanner').onclick = () => window.vuelosPedirAlAsistente && window.vuelosPedirAlAsistente();
   pintarHome();
 })();

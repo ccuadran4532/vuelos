@@ -1,6 +1,6 @@
 // Service worker: permite instalar la app y abrirla sin internet con los últimos datos.
-const CACHE = "vuelos-v11";
-const ARCHIVOS = ["./", "./index.html", "./styles.css", "./app.js", "./config.js", "./manifest.webmanifest", "./buscar.js", "./aeropuertos.json",
+const CACHE = "vuelos-v13";
+const ARCHIVOS = ["./", "./index.html", "./styles.css", "./app.js", "./config.js", "./manifest.webmanifest", "./buscar.js", "./asistente.js", "./aeropuertos.json",
   "./icons/asientos-192.png", "./icons/asientos-512.png", "./icons/asientos-favicon.png"];
 
 self.addEventListener("install", (e) => {

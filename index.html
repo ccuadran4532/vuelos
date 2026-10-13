@@ -11,7 +11,7 @@
 <title>Vuelos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="styles.css?v=11">
+<link rel="stylesheet" href="styles.css?v=13">
 </head>
 <body>
 <div class="luces" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -25,6 +25,23 @@
 </div></div>
 
 <main>
+  <!-- ASISTENTE -->
+  <section class="view" id="v-chat" hidden>
+    <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:10px"><div><h1 class="large">Asistente</h1><p class="sub">Pídeme el viaje con tus palabras, escribiendo o hablando.</p></div><button type="button" class="tintlink" id="chBorrar" style="margin-bottom:6px">Borrar chat</button></div>
+    <div class="view" id="chVacio" style="gap:10px">
+      <div class="hero"><p>Escríbeme o toca el 🎤 y dime, por ejemplo: <b>"Vuelo barato a Lima en marzo para 3 personas"</b>. Te muestro el <b>calendario con el precio de cada día</b>, te recomiendo el más conveniente y tú decides.</p></div>
+      <div class="ghead">Prueba con</div>
+      <div class="chips" style="flex-wrap:wrap">
+        <button type="button" data-ejemplo="Vuelo barato a Lima en marzo para 2 personas, 7 noches">Lima en marzo, 2 personas</button>
+        <button type="button" data-ejemplo="Madrid del 15 de enero al 10 de febrero para 2 adultos">Madrid, enero–febrero</button>
+        <button type="button" data-ejemplo="Miami fechas flexibles una semana para 4 personas">Miami, flexible, 4 personas</button>
+        <button type="button" data-ejemplo="Solo ida a Buenos Aires el próximo mes para mí">Buenos Aires, solo ida</button>
+      </div>
+    </div>
+    <div class="chat" id="chLista"></div>
+    <div style="height:170px"></div>
+  </section>
+
   <!-- BUSCAR -->
   <section class="view" id="v-buscar">
     <!-- inicio del buscador -->
@@ -57,6 +74,7 @@
         <button type="button" class="btn" id="bsBuscar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar vuelos</button>
         <div class="gfoot" id="bsMsg" style="text-align:center"></div>
       </div>
+      <button type="button" class="banner glass" id="bsBanner"><span class="bi">🎤</span><span><b>Pídemelo con tus palabras</b><br><small>"Vuelo barato a Lima en marzo para 3 personas"</small></span></button>
       <div class="group" id="bsRecG" hidden><div class="ghead">Búsquedas recientes</div><div class="recientes" id="bsRec"></div></div>
       <div class="gfoot">Cada búsqueda la hace tu servidor en Google Flights sin cookies ni historial, como una ventana de incógnito. Si repites la misma búsqueda antes de 30 minutos, se usa la respuesta guardada.</div>
     </div>
@@ -113,6 +131,7 @@
 
   <!-- HOY -->
   <section class="view" id="v-hoy" hidden>
+    <div style="display:flex;justify-content:flex-end;margin-bottom:-14px"><button type="button" class="paxbtn" id="irComparar">Comparar por destino ›</button></div>
     <div><h1 class="large">Ofertas de hoy</h1><p class="sub">Santiago · <button type="button" class="paxbtn" id="paxBtn"><span id="paxTxt">2 adultos</span> ▾</button> · ida y vuelta</p></div>
     <div class="group" id="paxBox" hidden><div class="list">
       <div class="field"><label>Adultos</label><div class="stepper"><button type="button" data-pax="a" data-d="-1" aria-label="Menos adultos">−</button><b id="pA">2</b><button type="button" data-pax="a" data-d="1" aria-label="Más adultos">+</button></div></div>
@@ -190,17 +209,25 @@
   <section class="view" id="v-det" hidden></section>
 </main>
 
+<form class="chbarra glass" id="chBarra" hidden>
+  <button type="button" class="mic" id="chMic" aria-label="Dictar con el micrófono"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button>
+  <input id="chTexto" type="text" placeholder="Ej: vuelo barato a Lima en marzo para 3" autocomplete="off" aria-label="Escribe tu pedido">
+  <button type="submit" class="enviar" aria-label="Enviar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+  <span class="ayuda" id="chAyuda" aria-live="polite"></span>
+</form>
 <nav class="tabbar" aria-label="Principal"><div class="row">
   <button type="button" data-v="buscar" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar</button>
+  <button type="button" data-v="chat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M4 5h16v11H9l-5 4z"/><path d="M8 9h8M8 12h5"/></svg>Asistente</button>
   <button type="button" data-v="hoy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M3 4v6.6c0 .5.2 1 .6 1.4l8.4 8.4a2 2 0 0 0 2.8 0l6.6-6.6a2 2 0 0 0 0-2.8L13 2.6c-.4-.4-.9-.6-1.4-.6H5a2 2 0 0 0-2 2z"/><circle cx="7.5" cy="7" r="1.5"/></svg>Ofertas</button>
-  <button type="button" data-v="comparar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Comparar</button>
+  
   <button type="button" data-v="mis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 17.3 18.2 21l-1.6-7 5.4-4.7-7.2-.6L12 2 9.2 8.7 2 9.3 7.4 14l-1.6 7z"/></svg>Destinos</button>
   <button type="button" data-v="promos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>Promos</button>
 </div></nav>
 
-<script src="config.js?v=11"></script>
-<script src="app.js?v=11"></script>
-<script src="buscar.js?v=11"></script>
+<script src="config.js?v=13"></script>
+<script src="app.js?v=13"></script>
+<script src="buscar.js?v=13"></script>
+<script src="asistente.js?v=13"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
 </script>

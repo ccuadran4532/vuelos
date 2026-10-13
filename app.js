@@ -7,7 +7,7 @@ const DOWL=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'
 const NAC=new Set(['ARI','IQQ','CJC','ANF','CPO','LSC','CCP','ZCO','ZAL','PMC','BBA','PUQ','IPC','PNT','ZOS','MHC','ZPC']);
 const TILE={'SKY':'var(--indigo)','JetSMART':'var(--orange)','LATAM':'var(--red)'};
 const CHEV='<svg class="chev" viewBox="0 0 8 13" aria-hidden="true"><path d="M1 1l5.5 5.5L1 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-const TITLES={buscar:'Buscar',hoy:'Ofertas',comparar:'Comparar',mis:'Destinos',promos:'Promos'};
+const TITLES={buscar:'Buscar',chat:'Asistente',hoy:'Ofertas',comparar:'Comparar',mis:'Destinos',promos:'Promos'};
 const AP={MDZ:'Mendoza',MVD:'Montevideo',GRU:'São Paulo',FLN:'Florianópolis',GIG:'Río de Janeiro',SCL:'Santiago'};
 let OFERTAS=[],MIS=[],TARIFAS={},filtro='todo',tab='buscar',detId=null;
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -25,8 +25,10 @@ const fdate=s=>{if(!s)return'';const d=dd(s);return `${DOW[d.getUTCDay()]} ${d.g
 function go(v){tab=v;detId=null;
   document.querySelectorAll('.tabbar button').forEach(x=>x.dataset.v===v?x.setAttribute('aria-current','page'):x.removeAttribute('aria-current'));
   Object.keys(TITLES).forEach(k=>$('v-'+k).hidden=k!==v);$('v-det').hidden=true;$('v-ajustes').hidden=true;$('backBtn').hidden=true;$('navt').textContent=TITLES[v];
+  if($('chBarra'))$('chBarra').hidden=v!=='chat';
   try{localStorage.setItem('tab',v)}catch(e){}window.scrollTo(0,0)}
 document.querySelectorAll('.tabbar button').forEach(b=>b.onclick=()=>go(b.dataset.v));
+if($('irComparar'))$('irComparar').onclick=()=>go('comparar');
 $('backBtn').onclick=()=>{history.state&&history.state.det?history.back():go(tab)};
 window.addEventListener('popstate',()=>{if(detId)go(tab)});
 {let t=null;try{t=localStorage.getItem('tab')}catch(e){}go(t&&TITLES[t]?t:'buscar')}
