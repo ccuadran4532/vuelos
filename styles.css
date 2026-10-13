@@ -270,3 +270,14 @@ table.bag th{color:var(--label2);font-weight:700}
 .chbarra .ayuda:empty{display:none}
 @keyframes pulso{50%{box-shadow:0 0 0 8px rgba(255,154,154,.25)}}
 @media (prefers-reduced-motion:reduce){.chbarra .mic.on{animation:none}}
+
+/* guía de tarifas */
+details.guia{border:1px solid var(--line);border-radius:14px;background:rgba(255,255,255,.06)}
+details.guia summary{list-style:none;cursor:pointer;padding:10px 12px;font-weight:800;font-size:14px}
+details.guia summary::-webkit-details-marker{display:none}
+details.guia[open] summary{border-bottom:1px solid var(--sep)}
+details.guia .gtxt{font-size:12.5px;color:var(--label2);padding:8px 12px 12px;line-height:1.45}
+details.guia table.bag th{font-size:11.5px;color:var(--tint)}
+details.guia table.bag td{font-size:12px}
+details.guia td.si{color:var(--ok);font-weight:700}
+details.guia td.no{color:var(--warn)}

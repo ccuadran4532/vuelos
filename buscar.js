@@ -327,6 +327,51 @@
       <div class="gfoot" style="padding:0" data-millas-out="${i}">LATAM muestra las millas solo cuando ingresas con tu cuenta. Escribe aquí lo que te pida y te digo si conviene.</div>
     </div>`;
   }
+  // ---------- qué incluye cada tarifa (fuentes oficiales; donde no hay dato confirmado, se dice)
+  const SUDAMERICA = ['AR', 'BO', 'BR', 'CL', 'CO', 'EC', 'GY', 'PY', 'PE', 'SR', 'UY', 'VE'];
+  const S = 'Sí', N = 'No', P = 'Se paga aparte';
+  const GUIA = {
+    LATAM: dest => ({
+      cols: SUDAMERICA.includes(dest) && dest !== 'BR' ? ['Basic', 'Light', 'Standard', 'Full'] : ['Light', 'Standard', 'Full'],
+      filas: SUDAMERICA.includes(dest) && dest !== 'BR'
+        ? [['Bolso bajo el asiento', S, S, S, S], ['Equipaje de mano 12 kg', P, S, S, S], ['Maleta en bodega 23 kg', P, P, S, S], ['Elegir asiento', P, P, P, 'Sí (estándar)']]
+        : [['Bolso bajo el asiento', S, S, S], ['Equipaje de mano 12 kg', S, S, S], ['Maleta en bodega 23 kg', P, '1 pieza', '1 pieza'], ['Elegir asiento', P, P, 'Sí (estándar)']],
+      nota: SUDAMERICA.includes(dest) && dest !== 'BR' ? 'Dentro de Sudamérica la tarifa más barata (Basic) no trae equipaje de mano: confírmalo en la pantalla de tarifas.' : 'Tabla oficial de LATAM para vuelos fuera de Sudamérica. Premium Economy y Business traen mano de 16 kg y bodega incluida.',
+      fuente: 'latamairlines.com, centro de ayuda (tarifas internacionales)'
+    }),
+    SKY: () => ({
+      cols: ['Basic', 'Light', 'Standard', 'Max', 'Max Flex'],
+      filas: [['Bolso bajo el asiento (25×35×45)', S, S, S, S, S], ['Equipaje de mano 10 kg', N, S, N, S, S], ['Maleta en bodega 23 kg', N, N, S, S, S], ['Asiento estándar', N, N, S, S, S], ['Cambios y devolución', N, N, N, N, 'Sí, 100%']],
+      nota: 'Ojo: Standard trae bodega pero NO equipaje de mano; Light es al revés.',
+      fuente: 'tarifas SKY 2026 (skyairline.com), revisadas el 31 ago 2026'
+    }),
+    JetSMART: () => ({
+      cols: ['Tarifa base', 'Agregar al comprar'],
+      filas: [['Bolso o mochila chica (10 kg, 45×35×25)', S, '—'], ['Equipaje de mano', P, 'desde $12.900 por tramo'], ['Maleta en bodega', P, 'desde $13.000 por tramo'], ['Elegir asiento', P, 'según vuelo']],
+      nota: 'Compra la maleta junto con el pasaje: en el aeropuerto cuesta más del doble.',
+      fuente: 'jetsmart.com/cl/es/opcionales'
+    }),
+    Iberia: () => ({
+      cols: ['Básica', 'Óptima', 'Confort', 'Flexible'],
+      filas: [['Elegir asiento', P, 'Gratis 24 h antes', S, S], ['Maleta en bodega', 'Revisar al comprar', 'Revisar al comprar', S, S], ['Cambios', N, 'Con cargo', 'Con cargo', 'Sin límite + reembolso']],
+      nota: 'Iberia recomienda Confort si llevas maleta: suele salir más barato que Básica + maleta.',
+      fuente: 'iberia.com/clases-tarifas/turista'
+    })
+  };
+  function guiaTarifa(aer, destCC) {
+    const nombre = (aer || '').replace(/Jet · SMART/g, 'JetSMART').split(/[·,]/)[0].trim();
+    const clave = Object.keys(GUIA).find(k => nombre.toLowerCase().startsWith(k.toLowerCase()));
+    if (!clave) {
+      return `<details class="guia"><summary>🧳 ¿Qué incluye? Maletas y asientos</summary><div class="gtxt">
+        En la mayoría de las aerolíneas, la tarifa más barata ("Basic" o "Light") <b>no incluye maleta en bodega ni elegir asiento</b>, y las tarifas siguientes sí traen la maleta de 23 kg.
+        Al comprar en ${esc(nombre || 'la aerolínea')}, mira la tabla de tarifas y compara: a veces la tarifa siguiente cuesta lo mismo que la básica más una maleta.</div></details>`;
+    }
+    const g = GUIA[clave](destCC);
+    return `<details class="guia"><summary>🧳 ¿Qué incluye cada tarifa de ${clave}?</summary>
+      <div class="tw"><table class="bag"><thead><tr><th></th>${g.cols.map(c => `<th>${c}</th>`).join('')}</tr></thead>
+      <tbody>${g.filas.map(f => `<tr><td>${f[0]}</td>${f.slice(1).map(v => `<td class="${v === S || /^Sí|pieza|Gratis|Sin límite/.test(v) ? 'si' : v === N || v === P ? 'no' : ''}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
+      <div class="gtxt">${g.nota}<br><span style="color:var(--label3)">Fuente: ${g.fuente}. Confírmalo siempre en la pantalla de tarifas antes de pagar.</span></div></details>`;
+  }
   function minutos(s) { const h = (s.match(/(\d+) h/) || [])[1] || 0, m = (s.match(/(\d+) min/) || [])[1] || 0; return h * 60 + +m; }
   function tarjeta(v, mejor, rapido, P) {
     const ex = extras(v, B.destino.cc);
@@ -340,6 +385,7 @@
         <div style="text-align:right"><div class="t">${esc(v.llega)}${v.masDias ? `<sup style="font-size:11px">+${v.masDias}</sup>` : ''}</div><div class="c">${esc(B.destino.iata)}</div></div></div>
       ${ex.map(([k, t]) => `<div class="extra ${k === 'ok' ? 'ok' : 'ojo'}"><span>${k === 'ok' ? '✓' : k === 'info' ? 'ℹ' : '⚠'}</span><span>${esc(t)}</span></div>`).join('')}
       <div class="vprecio"><span class="pp">${CLP(v.precio)} por persona<br>tasas incluidas · equipaje según tarifa</span><span class="tot"><b>${CLP(v.precio * P)}</b><span>total ${P} ${P === 1 ? 'persona' : 'personas'}</span></span></div>
+      ${guiaTarifa(v.aerolinea, B.destino.cc)}
       ${(o => o ? `<a class="btn plain" style="padding:11px;font-size:15px" href="${o.url}" target="_blank" rel="noopener noreferrer">Comprar directo en ${esc(o.nombre)} ↗</a>` : '')(oficial(v.aerolinea))}
     </div>`;
   }
