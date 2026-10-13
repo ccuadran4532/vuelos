@@ -16,7 +16,7 @@
   try { Object.assign(B, JSON.parse(localStorage.getItem('busqueda') || '{}')); } catch (e) {}
   if (B.ida && B.ida < hoyIso()) { B.ida = null; B.vuelta = null; }
   const guardar = () => { try { localStorage.setItem('busqueda', JSON.stringify(B)); } catch (e) {} };
-  let AEROS = null, PAISES = [], PAIS_DE = {}, RES = null, SEL = 0, FILTRO = 'todos', ELIGIENDO = 'destino';
+  let AEROS = null, PAISES = [], PAIS_DE = {}, RES = null, SEL = 0, FILTRO = 'todos', FRANJA = 'todas', ELIGIENDO = 'destino';
   const ORI = () => B.origen || { iata: 'SCL', ciudad: 'Santiago', pais: 'Chile', cc: 'CL' };
 
   // ---------- pantallas internas
@@ -244,7 +244,7 @@
       const u = conf.url + (conf.url.includes('?') ? '&' : '?') + 'clave=' + encodeURIComponent(conf.key) + '&accion=buscar&flex=3&' + new URLSearchParams(q).toString();
       const j = await (await fetch(u)).json();
       if (!j.ok) throw new Error(j.error === 'clave' ? 'clave incorrecta' : (j.error || 'sin respuesta'));
-      RES = j; FILTRO = 'todos';
+      RES = j; FILTRO = 'todos'; FRANJA = 'todas';
       SEL = Math.max(0, RES.fechas.findIndex(f => f.ida === B.ida));
       const conPrecio = RES.fechas.filter(f => f.min);
       // guardar en recientes
@@ -271,6 +271,9 @@
     let vuelos = (f.vuelos || []).slice();
     if (FILTRO === 'directos') vuelos = vuelos.filter(v => v.directo);
     if (FILTRO === 'sinextra') vuelos = vuelos.filter(v => !extras(v, B.destino.cc).some(x => x[0] === 'ojo'));
+    const hora = v => +String(v.sale).slice(0, 2);
+    const FR = { manana: h => h >= 5 && h < 12, tarde: h => h >= 12 && h < 19, noche: h => h >= 19 || h < 5 };
+    if (FRANJA !== 'todas') vuelos = vuelos.filter(v => FR[FRANJA](hora(v)));
     if (FILTRO === 'rapido') vuelos.sort((a, b) => minutos(a.duracion) - minutos(b.duracion));
     const masRapido = (f.vuelos || []).filter(v => v.directo).sort((a, b) => a.precio - b.precio)[0];
     const bebeTxt = B.b ? ` + ${B.b} ${B.b === 1 ? 'bebé' : 'bebés'} (cobro de bebé en brazos: lo confirma la aerolínea al comprar, suele ser cerca del 10% de la tarifa más tasas)` : '';
@@ -285,8 +288,11 @@
       <div class="chips" id="bsFiltros">
         ${[['todos', 'Todos'], ['directos', 'Directos'], ['sinextra', 'Sin costos extra'], ['rapido', 'Más rápido']].map(([k, t]) => `<button type="button" data-f="${k}" aria-pressed="${FILTRO === k}">${t}</button>`).join('')}
       </div>
-      <div class="gfoot">${fCorta(f.ida)}${f.vuelta ? ' – ' + fCorta(f.vuelta) : ''} · ${vuelos.length} vuelos · <b style="color:#fff">total final para ${P} ${P === 1 ? 'persona' : 'personas'}</b>, con tasas e impuestos${bebeTxt}.</div>
-      ${vuelos.length ? vuelos.map((v, i) => tarjeta(v, i === 0 && FILTRO === 'todos', v === masRapido, P) + (/latam/i.test(v.aerolinea) ? bloqueMillas(v, f, i) : '')).join('') : '<div class="empty glass" style="border-radius:24px">No hay vuelos con este filtro para esta fecha.</div>'}
+      <div class="chips" id="bsFranjas" aria-label="Hora de salida">
+        ${[['todas', 'Cualquier hora'], ['manana', '🌅 Mañana 5–12'], ['tarde', '☀️ Tarde 12–19'], ['noche', '🌙 Noche 19–5']].map(([k, t]) => `<button type="button" data-fr="${k}" aria-pressed="${FRANJA === k}">${t}</button>`).join('')}
+      </div>
+      <div class="gfoot">${fCorta(f.ida)}${f.vuelta ? ' – ' + fCorta(f.vuelta) : ''} · ${vuelos.length} ${vuelos.length === 1 ? "vuelo" : "vuelos"} · <b style="color:#fff">total final para ${P} ${P === 1 ? 'persona' : 'personas'}</b>, con tasas e impuestos${bebeTxt}.</div>
+      ${vuelos.length ? vuelos.map((v, i) => tarjeta(v, i === 0 && FILTRO === 'todos', v === masRapido, P) + (/latam/i.test(v.aerolinea) ? bloqueMillas(v, f, i) : '')).join('') : '<div class="empty glass" style="border-radius:24px">No hay vuelos con estos filtros para esta fecha. Prueba otra hora u otro día en las barras de arriba.</div>'}
       ${f.link ? `<a class="btn plain" href="${esc(f.link)}" target="_blank" rel="noopener noreferrer">Ver en Google Flights</a>` : ''}
       <div class="gfoot">Precios de Google Flights para 1 adulto multiplicados por ${P}, con tasas de embarque e impuestos obligatorios. Google muestra el precio más bajo publicado; a veces viene de una agencia. Por eso el botón te lleva siempre al <b>sitio oficial de la aerolínea</b>, sin intermediarios ni comisiones: ahí confirmas el precio final antes de pagar. En Google Flights, elige siempre la opción "Reservar con la aerolínea".</div>`;
     $('bsBarras').querySelectorAll('[data-i]').forEach(b => b.onclick = () => { SEL = +b.dataset.i; pintarRes(); });
@@ -300,6 +306,7 @@
         : '<b style="color:var(--bad)">Conviene pagar en dinero y guardar las millas.</b>';
       out.innerHTML = `Cada milla vale <b>${CLP(valor)}</b> en este vuelo (${CLP(precio)} ÷ ${m.toLocaleString('es-CL')} millas). ${veredicto} En el canje igual se pagan tasas en dinero.`;
     }));
+    $('bsFranjas').querySelectorAll('[data-fr]').forEach(b => b.onclick = () => { FRANJA = b.dataset.fr; pintarRes(); });
     $('bsFiltros').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FILTRO = b.dataset.f; pintarRes(); });
   }
   // Sitios oficiales: para comprar sin agencias ni comisiones.
