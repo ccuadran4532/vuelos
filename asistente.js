@@ -165,7 +165,7 @@
     const trozos = [];
     for (let i = 0; i < r.dias; i += 8) trozos.push({ desde: sumar(r.desde, i), dias: Math.min(8, r.dias - i) });
     bot(`Entendí:<br>${resumen(r)}${r.notas.length ? '<div class="nota">' + r.notas.map(esc).join('<br>') + '</div>' : ''}
-      <div class="cargando-mini"><svg class="avion" viewBox="0 0 24 24" fill="#ffc98b" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
+      <div class="cargando-mini"><svg class="avion" viewBox="0 0 24 24" fill="#C8501E" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg>
       <span>Buscando el precio de cada día en todas las aerolíneas… <b id="chProg">0 de ${r.dias} días</b> · <b id="chSeg">0 s</b><br>Deja la app abierta; tarda menos de 1 minuto.</span></div>`);
     const t0 = Date.now(); const reloj = setInterval(() => { const e = $('chSeg'); if (e) e.textContent = Math.round((Date.now() - t0) / 1000) + ' s'; }, 1000);
     let listos = 0, todosMemoria = true, errores = 0;

@@ -244,7 +244,7 @@
     ver('res');
     $('bsResRuta').textContent = `${ORI().iata} → ${B.destino.iata} · ${B.destino.ciudad}`;
     $('bsResInfo').textContent = `${fCorta(B.ida)}${q.vuelta ? ' – ' + fCorta(q.vuelta) + ' · ' + noches() + ' noches' : ' · solo ida'} · ${txtPersonas()}`;
-    $('bsResCuerpo').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#ffc98b" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Buscando en todas las aerolíneas…</b><span class="gfoot">Reviso tu fecha y 3 días antes y después. Tarda unos 20 segundos.</span></div>`;
+    $('bsResCuerpo').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#C8501E" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Buscando en todas las aerolíneas…</b><span class="gfoot">Reviso tu fecha y 3 días antes y después. Tarda unos 20 segundos.</span></div>`;
     if (!AEROS) { try { AEROS = await (await fetch('aeropuertos.json')).json(); Object.keys(AEROS).forEach(cc => AEROS[cc].forEach(a => PAIS_DE[a[0]] = cc)); } catch (e) {} }
     try {
       const u = conf.url + (conf.url.includes('?') ? '&' : '?') + 'clave=' + encodeURIComponent(conf.key) + '&accion=buscar&flex=3&' + new URLSearchParams(q).toString();
@@ -295,15 +295,15 @@
       ${consejo(f)}
       ${grafico(f, P)}
       <div id="autoVend"></div>
-      ${f.aviso ? `<div class="hero" style="border-color:rgba(125,240,176,.6)"><p>📈 <b>Google Flights:</b> ${esc(f.aviso.replace(/CLP\s?([\d,]+)/, (m, n) => CLP(+n.replace(/,/g, ''))))}</p></div>` : ''}
-      ${notasDestino(B.destino.cc).map(t => `<div class="hero" style="border-color:rgba(255,210,122,.6)"><span class="k" style="color:var(--warn)">Costo aparte del destino</span><p>${esc(t)}</p></div>`).join('')}
+      ${f.aviso ? `<div class="hero" style="border-color:rgba(30,142,62,0.42)"><p>📈 <b>Google Flights:</b> ${esc(f.aviso.replace(/CLP\s?([\d,]+)/, (m, n) => CLP(+n.replace(/,/g, ''))))}</p></div>` : ''}
+      ${notasDestino(B.destino.cc).map(t => `<div class="hero" style="border-color:rgba(161,92,0,0.36)"><span class="k" style="color:var(--warn)">Costo aparte del destino</span><p>${esc(t)}</p></div>`).join('')}
       <div class="chips" id="bsFiltros">
         ${[['todos', 'Todos'], ['directos', 'Directos'], ['sinextra', 'Sin costos extra'], ['rapido', 'Más rápido']].map(([k, t]) => `<button type="button" data-f="${k}" aria-pressed="${FILTRO === k}">${t}</button>`).join('')}
       </div>
       <div class="chips" id="bsFranjas" aria-label="Hora de salida">
         ${[['todas', 'Cualquier hora'], ['manana', '🌅 Mañana 5–12'], ['tarde', '☀️ Tarde 12–19'], ['noche', '🌙 Noche 19–5']].map(([k, t]) => `<button type="button" data-fr="${k}" aria-pressed="${FRANJA === k}">${t}</button>`).join('')}
       </div>
-      <div class="gfoot">${fCorta(f.ida)}${f.vuelta ? ' – ' + fCorta(f.vuelta) : ''} · ${vuelos.length} ${vuelos.length === 1 ? "vuelo" : "vuelos"} · <b style="color:#fff">total final para ${P} ${P === 1 ? 'persona' : 'personas'}</b>, con tasas e impuestos${bebeTxt}.</div>
+      <div class="gfoot">${fCorta(f.ida)}${f.vuelta ? ' – ' + fCorta(f.vuelta) : ''} · ${vuelos.length} ${vuelos.length === 1 ? "vuelo" : "vuelos"} · <b style="color:var(--label)">total final para ${P} ${P === 1 ? 'persona' : 'personas'}</b>, con tasas e impuestos${bebeTxt}.</div>
       ${vuelos.length ? vuelos.map((v, i) => tarjeta(v, i === 0 && FILTRO === 'todos', v === masRapido, P, i) + (/latam/i.test(v.aerolinea) ? bloqueMillas(v, f, i) : '')).join('') : '<div class="empty glass" style="border-radius:24px">No hay vuelos con estos filtros para esta fecha. Prueba otra hora u otro día en las barras de arriba.</div>'}
       ${f.link ? `<a class="btn plain" href="${esc(f.link)}" target="_blank" rel="noopener noreferrer">Ver en Google Flights</a>` : ''}
       ${agencias(f)}
@@ -386,7 +386,7 @@
   // 5) tarifa error
   function tarifaErrorCard(f, P) {
     if (!f.min || !f.tipico || f.min >= f.tipico[0] * 0.6) return '';
-    return `<div class="hero" style="border-color:rgba(255,201,139,.9)"><span class="k" style="color:var(--tint)">⚡ Posible tarifa error</span>
+    return `<div class="hero" style="border-color:rgba(200,80,30,0.54)"><span class="k" style="color:var(--tint)">⚡ Posible tarifa error</span>
       <p><b>${CLP(f.min)}</b> por persona, cuando lo normal es ${CLP(f.tipico[0])}–${CLP(f.tipico[1])}: ${Math.round((1 - f.min / f.tipico[0]) * 100)}% bajo lo normal. Suele durar pocas horas.</p>
       <div class="gfoot" style="padding:0">Cómprala en la aerolínea, no pagues hotel ni nada más hasta que llegue la confirmación con el número de boleto (a veces la aerolínea la anula).</div></div>`;
   }
@@ -486,11 +486,11 @@
     return 'https://www.latamairlines.com/cl/es/ofertas-vuelos?' + p.toString();
   }
   function bloqueMillas(v, f, i) {
-    return `<div class="glass" style="border-radius:16px;padding:12px 14px;display:grid;gap:8px;border-color:rgba(255,201,139,.5);margin-top:-8px">
+    return `<div class="glass" style="border-radius:16px;padding:12px 14px;display:grid;gap:8px;border-color:rgba(200,80,30,0.3);margin-top:-8px">
       <div style="font-size:13px;font-weight:800;color:var(--tint)">Millas LATAM Pass</div>
       <a class="btn plain" style="padding:10px;font-size:14px" href="${linkMillas(f)}" target="_blank" rel="noopener noreferrer">Ver precio en millas ↗</a>
       <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--label2)">Millas por persona
-        <input type="number" inputmode="numeric" data-millas="${i}" data-precio="${v.precio}" placeholder="ej. 60000" style="flex:1;min-width:0;background:rgba(255,255,255,.12);border:1px solid var(--line);border-radius:10px;color:#fff;padding:8px;font:700 15px var(--font)"></label>
+        <input type="number" inputmode="numeric" data-millas="${i}" data-precio="${v.precio}" placeholder="ej. 60000" style="flex:1;min-width:0;background:rgba(0,0,0,0.036);border:1px solid var(--line);border-radius:10px;color:#fff;padding:8px;font:700 15px var(--font)"></label>
       <div class="gfoot" style="padding:0" data-millas-out="${i}">LATAM muestra las millas solo cuando ingresas con tu cuenta. Escribe aquí lo que te pida y te digo si conviene.</div>
     </div>`;
   }
@@ -629,18 +629,18 @@
     let barras = '', bandas = '', etiquetas = '';
     H.forEach((x, i) => {
       const ev = evDe(x[0]), esHoy = i === H.length - 1;
-      barras += `<rect x="${(i * bw + 0.5).toFixed(1)}" y="${y(x[1]).toFixed(1)}" width="${Math.max(bw - 1, 1).toFixed(1)}" height="${(top + A - y(x[1])).toFixed(1)}" rx="1" fill="${esHoy ? '#ffffff' : ev ? 'var(--tint)' : 'rgba(255,255,255,.38)'}"><title>${fCorta(x[0])}: ${CLP(x[1])}${ev ? ' · ' + ev.n : ''}</title></rect>`;
+      barras += `<rect x="${(i * bw + 0.5).toFixed(1)}" y="${y(x[1]).toFixed(1)}" width="${Math.max(bw - 1, 1).toFixed(1)}" height="${(top + A - y(x[1])).toFixed(1)}" rx="1" fill="${esHoy ? '#1D1D1F' : ev ? 'var(--tint)' : 'rgba(0,0,0,0.114)'}"><title>${fCorta(x[0])}: ${CLP(x[1])}${ev ? ' · ' + ev.n : ''}</title></rect>`;
     });
     // bandas y nombres de eventos dentro del período
     EVENTOS.forEach(e => {
       const idx = H.map((x, i) => x[0] >= e.d && x[0] <= e.h ? i : -1).filter(i => i >= 0);
       if (!idx.length) return;
       const x0 = idx[0] * bw, x1 = (idx[idx.length - 1] + 1) * bw;
-      bandas += `<rect x="${x0.toFixed(1)}" y="${top}" width="${(x1 - x0).toFixed(1)}" height="${A}" fill="rgba(255,201,139,.14)"/>`;
+      bandas += `<rect x="${x0.toFixed(1)}" y="${top}" width="${(x1 - x0).toFixed(1)}" height="${A}" fill="rgba(200,80,30,0.084)"/>`;
       etiquetas += `<text x="${((x0 + x1) / 2).toFixed(1)}" y="11" text-anchor="middle" font-size="9" font-weight="800" fill="var(--tint)">${e.n}</text>`;
     });
-    const tip = f.tipico ? `<rect x="0" y="${y(f.tipico[1]).toFixed(1)}" width="${W}" height="${(y(f.tipico[0]) - y(f.tipico[1])).toFixed(1)}" fill="rgba(125,240,176,.10)"/>
-      <line x1="0" x2="${W}" y1="${y(f.tipico[0]).toFixed(1)}" y2="${y(f.tipico[0]).toFixed(1)}" stroke="rgba(125,240,176,.5)" stroke-dasharray="3 3"/>` : '';
+    const tip = f.tipico ? `<rect x="0" y="${y(f.tipico[1]).toFixed(1)}" width="${W}" height="${(y(f.tipico[0]) - y(f.tipico[1])).toFixed(1)}" fill="rgba(30,142,62,0.07)"/>
+      <line x1="0" x2="${W}" y1="${y(f.tipico[0]).toFixed(1)}" y2="${y(f.tipico[0]).toFixed(1)}" stroke="rgba(30,142,62,0.35)" stroke-dasharray="3 3"/>` : '';
     // resumen: qué pasó en los eventos y cuál viene
     const actual = vals[vals.length - 1];
     const lineas = EVENTOS.map(e => {
@@ -663,7 +663,7 @@
     return `<div class="glass graf">
       <div class="gt"><b>📊 Precio de este viaje: últimos ${H.length} días</b><span>${fCorta(H[0][0])} → hoy</span></div>
       <svg viewBox="0 0 ${W} ${top + A + 2}" width="100%" height="${top + A + 2}" role="img" aria-label="Gráfico de barras del precio diario de este viaje, con los eventos de descuento marcados" preserveAspectRatio="none">${tip}${bandas}${barras}${etiquetas}</svg>
-      <div class="gl"><span><i style="background:var(--tint)"></i>evento de descuento</span><span><i style="background:#fff"></i>hoy ${CLP(actual)}</span>${f.tipico ? `<span><i style="background:rgba(125,240,176,.5)"></i>típico ${CLP(f.tipico[0])}–${CLP(f.tipico[1])}</span>` : ''}</div>
+      <div class="gl"><span><i style="background:var(--tint)"></i>evento de descuento</span><span><i style="background:#1D1D1F"></i>hoy ${CLP(actual)}</span>${f.tipico ? `<span><i style="background:rgba(30,142,62,0.35)"></i>típico ${CLP(f.tipico[0])}–${CLP(f.tipico[1])}</span>` : ''}</div>
       ${lineas.length ? `<ul class="gev">${lineas.join('')}</ul>` : ''}
       <div class="gfoot" style="padding:0">${consejoEv}</div>
       <div class="gfoot" style="padding:0;color:var(--label3)">Datos de Google Flights: precio por persona de estas mismas fechas, día a día. Google guarda unos 2 meses; desde ahora la app guardará su propio historial de lo que sigas.</div>
@@ -713,7 +713,7 @@
     const presu = +$('exPresu').value || 0;
     const lista = DESTINOS.filter(x => (EX_REGION === 'todos' || x[2] === EX_REGION) && x[0] !== ORI().iata);
     const P = B.a + B.n;
-    $('exRes').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#ffc98b" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Revisando ${lista.length} destinos…</b><span class="gfoot">Salida ${fCorta(ida)}${vuelta ? ', vuelta ' + fCorta(vuelta) : ', solo ida'}. Unos 15 segundos.</span></div>`;
+    $('exRes').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#C8501E" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Revisando ${lista.length} destinos…</b><span class="gfoot">Salida ${fCorta(ida)}${vuelta ? ', vuelta ' + fCorta(vuelta) : ', solo ida'}. Unos 15 segundos.</span></div>`;
     const tandas = []; for (let i = 0; i < lista.length; i += 8) tandas.push(lista.slice(i, i + 8));
     const res = [];
     await Promise.all(tandas.map(async t => {
@@ -745,7 +745,7 @@
     const d = f.dosIdas; if (!d || !f.min) return '';
     const ahorro = f.min - d.total;
     const linea = (v, t) => `<div class="ktramo"><span class="kt">${t}</span><b>${esc(v.sale)} → ${esc(v.llega)}${v.masDias ? '<sup>+' + v.masDias + '</sup>' : ''}</b><span>${esc(v.aerolinea)} · ${esc(v.duracion)} · ${v.directo ? 'directo' : esc(v.paradas)} · ${CLP(v.precio)}</span></div>`;
-    if (ahorro > f.min * 0.01) return `<div class="hero" style="border-color:rgba(125,240,176,.6)"><span class="k" style="color:var(--ok)">✂️ Dos pasajes solo ida: más barato</span>
+    if (ahorro > f.min * 0.01) return `<div class="hero" style="border-color:rgba(30,142,62,0.42)"><span class="k" style="color:var(--ok)">✂️ Dos pasajes solo ida: más barato</span>
       <p>Comprando la ida y la vuelta por separado pagas <b>${CLP(d.total)}</b> por persona: <b>${CLP(ahorro)} menos</b> (${CLP(ahorro * P)} para ${P}).</p>${linea(d.ida, 'Ida')}${linea(d.vuelta, 'Vuelta')}
       <div class="gfoot" style="padding:0">Ojo: son dos reservas separadas. Si la ida se atrasa o cambia, la aerolínea de la vuelta no responde.</div></div>`;
     return `<div class="gfoot">✓ Revisé dos pasajes solo ida (${CLP(d.total)} por persona): no conviene, el ida y vuelta es más barato.</div>`;
@@ -813,7 +813,7 @@
       out.textContent = 'Consultando…';
       try {
         const j = await (await fetch(conf.url + (conf.url.includes('?') ? '&' : '?') + new URLSearchParams({ clave: conf.key, accion: 'estadoVuelo', numero: x.numero, fecha: x.fecha }))).json();
-        out.innerHTML = j.ok ? `<b style="color:#fff">${esc(j.estado)}</b>${j.atraso ? ' · ' + esc(j.atraso) : ''}${j.puerta ? ' · Puerta ' + esc(j.puerta) : ''}<br><span style="color:var(--label3)">${esc(j.nota)} Fuente: FlightAware.</span>` : 'No encontré información de ese vuelo.';
+        out.innerHTML = j.ok ? `<b style="color:var(--label)">${esc(j.estado)}</b>${j.atraso ? ' · ' + esc(j.atraso) : ''}${j.puerta ? ' · Puerta ' + esc(j.puerta) : ''}<br><span style="color:var(--label3)">${esc(j.nota)} Fuente: FlightAware.</span>` : 'No encontré información de ese vuelo.';
       } catch (e) { out.textContent = 'Sin conexión.'; }
     });
     cont.querySelectorAll('[data-qv]').forEach(btn => btn.onclick = async () => { btn.disabled = true; try { await enviar({ accion: 'quitarViaje', id: btn.dataset.qv }); } catch (e) { btn.disabled = false; } });
