@@ -302,3 +302,12 @@ details.guia td.no{color:var(--warn)}
 .segcard{border-radius:22px;padding:14px 16px;display:grid;gap:8px}
 .segcard .top{display:flex;justify-content:space-between;gap:8px;font-size:14px}
 .segcard .aer{font-size:12px;color:var(--label2);text-align:right}
+
+/* gráfico de historial */
+.graf{border-radius:22px;padding:12px 14px;display:grid;gap:8px}
+.graf .gt{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:14px}
+.graf .gt span{font-size:11.5px;color:var(--label2)}
+.graf svg{display:block;width:100%;height:auto;max-height:120px}
+.graf .gl{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--label2)}
+.graf .gl i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
+.graf .gev{margin:0;padding-left:16px;font-size:12.5px;line-height:1.5}

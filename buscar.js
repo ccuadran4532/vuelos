@@ -289,6 +289,7 @@
         <div class="gfoot" style="padding:8px 10px 2px">Verde = más barato. ${RES.vuelta ? `La vuelta es siempre ${noches()} noches después.` : ''} ${RES.desdeMemoria ? 'Búsqueda de hace menos de 30 min (no se repitió).' : ''}</div>
       </div>
       ${consejo(f)}
+      ${grafico(f, P)}
       ${comparacionKayak(f, P)}
       ${f.aviso ? `<div class="hero" style="border-color:rgba(125,240,176,.6)"><p>📈 <b>Google Flights:</b> ${esc(f.aviso.replace(/CLP\s?([\d,]+)/, (m, n) => CLP(+n.replace(/,/g, ''))))}</p></div>` : ''}
       ${notasDestino(B.destino.cc).map(t => `<div class="hero" style="border-color:rgba(255,210,122,.6)"><span class="k" style="color:var(--warn)">Costo aparte del destino</span><p>${esc(t)}</p></div>`).join('')}
@@ -491,6 +492,70 @@
       window.vuelosIrABuscar({ origen: lug(x.origen), destino: lug(x.destino), ida: x.ida, vuelta: x.vuelta, modo: x.vuelta ? 'rt' : 'ow', a: x.a, n: x.n, b: x.b, clase: x.clase });
     });
     cont.querySelectorAll('[data-dejar]').forEach(btn => btn.onclick = async () => { btn.disabled = true; try { await enviar({ accion: 'dejarSeguir', id: btn.dataset.dejar }); } catch (e) { btn.disabled = false; } });
+  }
+  // ---------- gráfico: precio de este viaje en los últimos ~2 meses + eventos de descuento
+  // Fechas oficiales (CCS y LATAM Pass). Las de 2027 son estimadas según los años anteriores.
+  const EVENTOS = [
+    { n: 'Revuelo LATAM', d: '2026-03-23', h: '2026-03-27' },
+    { n: 'CyberDay', d: '2026-06-01', h: '2026-06-03' },
+    { n: 'Travel Sale', d: '2026-08-31', h: '2026-09-02' },
+    { n: 'CyberMonday', d: '2026-10-05', h: '2026-10-07' },
+    { n: 'Black Friday', d: '2026-11-27', h: '2026-11-30' },
+    { n: 'Revuelo LATAM', d: '2027-03-22', h: '2027-03-26', estimado: true },
+    { n: 'CyberDay', d: '2027-05-31', h: '2027-06-02', estimado: true },
+    { n: 'Travel Sale', d: '2027-08-30', h: '2027-09-01', estimado: true },
+    { n: 'CyberMonday', d: '2027-10-04', h: '2027-10-06', estimado: true }
+  ];
+  function grafico(f, P) {
+    const H = (f.historia || []).filter(x => x[1]);
+    if (H.length < 5) return '';
+    const hoy = hoyIso(), W = 320, A = 96, top = 16;
+    const vals = H.map(x => x[1]), mn = Math.min(...vals, f.tipico ? f.tipico[0] : Infinity) * 0.92, mx = Math.max(...vals, f.tipico ? f.tipico[1] : 0);
+    const y = v => top + A - (v - mn) / ((mx - mn) || 1) * A;
+    const bw = W / H.length;
+    const evDe = d => EVENTOS.find(e => d >= e.d && d <= e.h);
+    let barras = '', bandas = '', etiquetas = '';
+    H.forEach((x, i) => {
+      const ev = evDe(x[0]), esHoy = i === H.length - 1;
+      barras += `<rect x="${(i * bw + 0.5).toFixed(1)}" y="${y(x[1]).toFixed(1)}" width="${Math.max(bw - 1, 1).toFixed(1)}" height="${(top + A - y(x[1])).toFixed(1)}" rx="1" fill="${esHoy ? '#ffffff' : ev ? 'var(--tint)' : 'rgba(255,255,255,.38)'}"><title>${fCorta(x[0])}: ${CLP(x[1])}${ev ? ' · ' + ev.n : ''}</title></rect>`;
+    });
+    // bandas y nombres de eventos dentro del período
+    EVENTOS.forEach(e => {
+      const idx = H.map((x, i) => x[0] >= e.d && x[0] <= e.h ? i : -1).filter(i => i >= 0);
+      if (!idx.length) return;
+      const x0 = idx[0] * bw, x1 = (idx[idx.length - 1] + 1) * bw;
+      bandas += `<rect x="${x0.toFixed(1)}" y="${top}" width="${(x1 - x0).toFixed(1)}" height="${A}" fill="rgba(255,201,139,.14)"/>`;
+      etiquetas += `<text x="${((x0 + x1) / 2).toFixed(1)}" y="11" text-anchor="middle" font-size="9" font-weight="800" fill="var(--tint)">${e.n}</text>`;
+    });
+    const tip = f.tipico ? `<rect x="0" y="${y(f.tipico[1]).toFixed(1)}" width="${W}" height="${(y(f.tipico[0]) - y(f.tipico[1])).toFixed(1)}" fill="rgba(125,240,176,.10)"/>
+      <line x1="0" x2="${W}" y1="${y(f.tipico[0]).toFixed(1)}" y2="${y(f.tipico[0]).toFixed(1)}" stroke="rgba(125,240,176,.5)" stroke-dasharray="3 3"/>` : '';
+    // resumen: qué pasó en los eventos y cuál viene
+    const actual = vals[vals.length - 1];
+    const lineas = EVENTOS.map(e => {
+      const en = H.filter(x => x[0] >= e.d && x[0] <= e.h).map(x => x[1]);
+      if (!en.length) return '';
+      const m = Math.min(...en), dif = actual - m;
+      return `<li><b>${e.n}</b> (${fCorta(e.d)}–${fCorta(e.h)}): ${CLP(m)}${dif > 0 ? ` · <span style="color:var(--ok)">${Math.round(dif / actual * 100)}% más barato que hoy</span>` : dif < 0 ? ` · <span style="color:var(--warn)">más caro que hoy</span>` : ''}</li>`;
+    }).filter(Boolean);
+    const prox = EVENTOS.find(e => e.h >= hoy && e.d <= f.ida);
+    const enEvento = EVENTOS.find(e => hoy >= e.d && hoy <= e.h);
+    let consejoEv = '';
+    if (enEvento) consejoEv = `🎉 <b>Hoy es ${enEvento.n}.</b> Compara este precio con lo que muestra el gráfico.`;
+    else if (prox) {
+      const dias = Math.round((D(prox.d) - D(hoy)) / 864e5);
+      const ahorros = EVENTOS.map(e => { const en = H.filter(x => x[0] >= e.d && x[0] <= e.h).map(x => x[1]); return en.length ? actual - Math.min(...en) : null; }).filter(x => x !== null);
+      const mejor = ahorros.length ? Math.max(...ahorros) : 0;
+      consejoEv = `⏳ Próximo evento: <b>${prox.n}${prox.estimado ? ' (fecha estimada)' : ''}</b>, ${fCorta(prox.d)}–${fCorta(prox.h)}, en <b>${dias} días</b>, antes de tu viaje.` +
+        (mejor > 0 ? ` En los eventos pasados este vuelo llegó a costar hasta <b>${CLP(mejor)} menos por persona</b> (${CLP(mejor * P)} para ${P}). Si se repite, podría valer la pena esperar; síguelo con 🔔 y te aviso.` : ' En los eventos pasados no bajó: esperar no asegura un mejor precio.');
+    } else consejoEv = 'No hay otro evento de descuento antes de tu viaje.';
+    return `<div class="glass graf">
+      <div class="gt"><b>📊 Precio de este viaje: últimos ${H.length} días</b><span>${fCorta(H[0][0])} → hoy</span></div>
+      <svg viewBox="0 0 ${W} ${top + A + 2}" width="100%" height="${top + A + 2}" role="img" aria-label="Gráfico de barras del precio diario de este viaje, con los eventos de descuento marcados" preserveAspectRatio="none">${tip}${bandas}${barras}${etiquetas}</svg>
+      <div class="gl"><span><i style="background:var(--tint)"></i>evento de descuento</span><span><i style="background:#fff"></i>hoy ${CLP(actual)}</span>${f.tipico ? `<span><i style="background:rgba(125,240,176,.5)"></i>típico ${CLP(f.tipico[0])}–${CLP(f.tipico[1])}</span>` : ''}</div>
+      ${lineas.length ? `<ul class="gev">${lineas.join('')}</ul>` : ''}
+      <div class="gfoot" style="padding:0">${consejoEv}</div>
+      <div class="gfoot" style="padding:0;color:var(--label3)">Datos de Google Flights: precio por persona de estas mismas fechas, día a día. Google guarda unos 2 meses; desde ahora la app guardará su propio historial de lo que sigas.</div>
+    </div>`;
   }
   function minutos(s) { const h = (s.match(/(\d+) h/) || [])[1] || 0, m = (s.match(/(\d+) min/) || [])[1] || 0; return h * 60 + +m; }
   function tarjeta(v, mejor, rapido, P) {
