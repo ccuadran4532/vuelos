@@ -319,3 +319,26 @@ details.guia td.no{color:var(--warn)}
 .excard .ext small,.excard .exp small{font-size:12px;color:var(--label2)}
 .excard .exp{text-align:right;display:grid;flex:none}
 .excard .exp b{font-size:19px}
+
+/* más formas de ahorrar */
+.ahorro{border-radius:22px;padding:12px 14px;display:grid;gap:10px}
+.ahbtns{display:flex;flex-wrap:wrap;gap:8px}
+.chip2{height:38px;padding:0 14px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.1);color:#fff;font:700 13px var(--font);cursor:pointer}
+.chip2[aria-pressed="true"]{background:var(--glass2);border-color:var(--tint)}
+.inp{border:1px solid var(--line);background:rgba(255,255,255,.1);color:#fff;border-radius:14px;padding:10px 12px;font:600 15px var(--font);min-width:0}
+.inp option{color:#111}
+.vend{display:grid;gap:6px;padding:8px 0;font-size:14px;line-height:1.45}
+.vrow{display:flex;justify-content:space-between;gap:10px;border-top:1px solid var(--line);padding-top:6px}
+.vrow2{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--line);padding:8px 0}
+.vrow2>div{display:grid;gap:2px;min-width:0}
+.vrow2 small{font-size:12px;color:var(--label2)}
+.vrow2>b{font-size:17px;flex:none}
+.grilla{overflow-x:auto}
+.grilla table{width:100%;border-collapse:collapse;font-size:13px}
+.grilla th{font-weight:700;color:var(--label2);padding:4px;text-align:center;white-space:nowrap}
+.grilla td{padding:3px;text-align:center}
+.grilla td button{width:100%;min-width:52px;height:34px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;font:700 13px var(--font);cursor:pointer}
+.grilla td button.gmin{background:rgba(125,240,176,.25);border-color:var(--ok)}
+.grilla td button.gact{outline:2px solid var(--tint)}
+.spin{display:inline-block;animation:vuela 1.2s ease-in-out infinite}
+@keyframes vuela{50%{transform:translateX(6px)}}

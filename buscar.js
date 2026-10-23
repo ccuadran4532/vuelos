@@ -289,7 +289,9 @@
         <div class="barras" id="bsBarras">${barras}</div>
         <div class="gfoot" style="padding:8px 10px 2px">Verde = más barato. ${RES.vuelta ? `La vuelta es siempre ${noches()} noches después.` : ''} ${RES.desdeMemoria ? 'Búsqueda de hace menos de 30 min (no se repitió).' : ''}</div>
       </div>
+      ${tarifaErrorCard(f, P)}
       ${dosIdasCard(f, P)}
+      ${ahorroCard(f)}
       ${consejo(f)}
       ${grafico(f, P)}
       ${comparacionKayak(f, P)}
@@ -302,7 +304,7 @@
         ${[['todas', 'Cualquier hora'], ['manana', '🌅 Mañana 5–12'], ['tarde', '☀️ Tarde 12–19'], ['noche', '🌙 Noche 19–5']].map(([k, t]) => `<button type="button" data-fr="${k}" aria-pressed="${FRANJA === k}">${t}</button>`).join('')}
       </div>
       <div class="gfoot">${fCorta(f.ida)}${f.vuelta ? ' – ' + fCorta(f.vuelta) : ''} · ${vuelos.length} ${vuelos.length === 1 ? "vuelo" : "vuelos"} · <b style="color:#fff">total final para ${P} ${P === 1 ? 'persona' : 'personas'}</b>, con tasas e impuestos${bebeTxt}.</div>
-      ${vuelos.length ? vuelos.map((v, i) => tarjeta(v, i === 0 && FILTRO === 'todos', v === masRapido, P) + (/latam/i.test(v.aerolinea) ? bloqueMillas(v, f, i) : '')).join('') : '<div class="empty glass" style="border-radius:24px">No hay vuelos con estos filtros para esta fecha. Prueba otra hora u otro día en las barras de arriba.</div>'}
+      ${vuelos.length ? vuelos.map((v, i) => tarjeta(v, i === 0 && FILTRO === 'todos', v === masRapido, P, i) + (/latam/i.test(v.aerolinea) ? bloqueMillas(v, f, i) : '')).join('') : '<div class="empty glass" style="border-radius:24px">No hay vuelos con estos filtros para esta fecha. Prueba otra hora u otro día en las barras de arriba.</div>'}
       ${f.link ? `<a class="btn plain" href="${esc(f.link)}" target="_blank" rel="noopener noreferrer">Ver en Google Flights</a>` : ''}
       ${agencias(f)}
       <div class="gfoot">Precios de Google Flights para 1 adulto multiplicados por ${P}, con tasas de embarque e impuestos obligatorios. Google muestra el precio más bajo publicado; a veces viene de una agencia. Por eso el botón te lleva siempre al <b>sitio oficial de la aerolínea</b>, sin intermediarios ni comisiones: ahí confirmas el precio final antes de pagar. En Google Flights, elige siempre la opción "Reservar con la aerolínea".</div>`;
@@ -320,6 +322,119 @@
     }));
     $('bsFranjas').querySelectorAll('[data-fr]').forEach(b => b.onclick = () => { FRANJA = b.dataset.fr; pintarRes(); });
     $('bsFiltros').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FILTRO = b.dataset.f; pintarRes(); });
+    $('bsResCuerpo').querySelectorAll('[data-vend]').forEach(b => b.onclick = () => vendedores(vuelos[+b.dataset.vend], f, P, b));
+    conectarAhorro(f, P);
+  }
+
+  // ---------- más formas de ahorrar
+  const api = q => fetch(conf.url + (conf.url.includes('?') ? '&' : '?') + new URLSearchParams(Object.assign({ clave: conf.key }, q))).then(r => r.json());
+  const cargandoTxt = t => `<div class="gfoot" style="padding:6px 0"><span class="spin" aria-hidden="true">✈️</span> ${t}</div>`;
+  const SUDAM = ['AR', 'BO', 'BR', 'CL', 'CO', 'EC', 'PY', 'PE', 'UY', 'VE'];
+
+  // 1) quién vende el vuelo (opciones de compra de Google)
+  async function vendedores(v, f, P, btn) {
+    const out = $('bsResCuerpo').querySelector('[data-vend-out="' + btn.dataset.vend + '"]');
+    btn.hidden = true; out.innerHTML = cargandoTxt('Preguntando a Google quién vende este vuelo… unos 10 segundos.');
+    try {
+      const j = await api({ accion: 'vendedores', origen: ORI().iata, destino: B.destino.iata, ida: f.ida, vuelta: f.vuelta || '', clase: B.clase, segs: JSON.stringify(v.segs) });
+      if (!j.ok) throw new Error(j.error);
+      const aer = j.opciones.filter(o => o.aerolinea), ag = j.opciones.filter(o => !o.aerolinea), mejor = j.opciones[0];
+      let veredicto;
+      if (mejor.aerolinea) veredicto = `<b style="color:var(--ok)">✓ El precio más bajo es directo en ${esc(mejor.nombre)}.</b> Cómprale a la aerolínea: sin intermediarios.`;
+      else if (aer.length) veredicto = `<b style="color:var(--warn)">${esc(mejor.nombre)} lo vende ${CLP(aer[0].precio - mejor.precio)} más barato que ${esc(aer[0].nombre)}</b> (${CLP((aer[0].precio - mejor.precio) * P)} para ${P}). Es una agencia: si hay cambios o atrasos, respondes con ella y no con la aerolínea.`;
+      else veredicto = '<b style="color:var(--warn)">Solo lo venden agencias.</b> Revisa bien sus condiciones antes de pagar.';
+      out.innerHTML = `<div class="vend">${veredicto}
+        ${j.opciones.map(o => `<div class="vrow"><span>${esc(o.nombre)}${o.aerolinea ? ' <span class="badge b-green" style="margin:0">aerolínea</span>' : ''}</span><b>${CLP(o.precio)}</b></div>`).join('')}
+        ${j.vuelta ? `<div class="gfoot" style="padding:0">Con la vuelta más barata para esta ida: ${esc(j.vuelta.sale)} → ${esc(j.vuelta.llega)}, ${esc(j.vuelta.aerolinea)}.</div>` : ''}
+        <div class="gfoot" style="padding:0">Precio por persona según Google, ${ag.length} ${ag.length === 1 ? 'agencia' : 'agencias'} y ${aer.length} ${aer.length === 1 ? 'aerolínea' : 'aerolíneas'}.</div></div>`;
+    } catch (e) { out.innerHTML = '<div class="gfoot">Google no mostró opciones de compra para este vuelo. Intenta con otro.</div>'; btn.hidden = false; }
+  }
+
+  // 5) tarifa error
+  function tarifaErrorCard(f, P) {
+    if (!f.min || !f.tipico || f.min >= f.tipico[0] * 0.6) return '';
+    return `<div class="hero" style="border-color:rgba(255,201,139,.9)"><span class="k" style="color:var(--tint)">⚡ Posible tarifa error</span>
+      <p><b>${CLP(f.min)}</b> por persona, cuando lo normal es ${CLP(f.tipico[0])}–${CLP(f.tipico[1])}: ${Math.round((1 - f.min / f.tipico[0]) * 100)}% bajo lo normal. Suele durar pocas horas.</p>
+      <div class="gfoot" style="padding:0">Cómprala en la aerolínea, no pagues hotel ni nada más hasta que llegue la confirmación con el número de boleto (a veces la aerolínea la anula).</div></div>`;
+  }
+
+  // 2, 3 y 4) otros aeropuertos, volver desde otra ciudad y tabla de fechas
+  const EXTRA_MC = { Europa: [['MXP', 'Milán'], ['AMS', 'Ámsterdam'], ['FRA', 'Fráncfort'], ['OPO', 'Oporto'], ['ZRH', 'Zúrich'], ['ATH', 'Atenas'], ['VCE', 'Venecia'], ['NCE', 'Niza']],
+    Norteamérica: [['FLL', 'Fort Lauderdale'], ['SFO', 'San Francisco'], ['LAS', 'Las Vegas'], ['ORD', 'Chicago'], ['YYZ', 'Toronto']] };
+  function ahorroCard(f) {
+    const rt = !!f.vuelta;
+    return `<div class="glass ahorro">
+      <b>💡 Más formas de ahorrar</b>
+      <div class="ahbtns">
+        <button type="button" class="chip2" id="ahAlt">✈️ Otros aeropuertos</button>
+        ${rt ? '<button type="button" class="chip2" id="ahMc">🔀 Volver desde otra ciudad</button><button type="button" class="chip2" id="ahGr">📅 Tabla de fechas</button>' : ''}
+      </div>
+      <div id="ahOut"></div></div>`;
+  }
+  function conectarAhorro(f, P) {
+    if (!$('ahAlt')) return;
+    const out = $('ahOut'), base = f.min;
+    const marcar = id => $('bsResCuerpo').querySelectorAll('.ahbtns button').forEach(b => b.setAttribute('aria-pressed', b.id === id));
+    const dif = total => total < base ? `<span style="color:var(--ok)">${CLP(base - total)} menos</span> por persona (${CLP((base - total) * P)} para ${P})` : `<span style="color:var(--label3)">${CLP(total - base)} más caro</span>`;
+    $('ahAlt').onclick = async () => {
+      marcar('ahAlt'); out.innerHTML = cargandoTxt('Revisando aeropuertos cercanos y salir desde Buenos Aires, Lima o São Paulo… unos 10 segundos.');
+      try {
+        const largo = B.destino.cc && !SUDAM.includes(B.destino.cc) ? 1 : 0;
+        const j = await api({ accion: 'alternativas', origen: ORI().iata, destino: B.destino.iata, ida: f.ida, vuelta: f.vuelta || '', clase: B.clase, largo });
+        if (!j.ok) throw new Error();
+        if (!j.opciones.length) { out.innerHTML = '<div class="gfoot">Para este destino no hay otro aeropuerto cercano que valga la pena revisar.</div>'; return; }
+        const conviene = j.opciones.filter(o => o.total < base);
+        out.innerHTML = `<div class="gfoot" style="padding:4px 0">${conviene.length ? `<b style="color:var(--ok)">${conviene.length === 1 ? 'Hay 1 opción' : 'Hay ' + conviene.length + ' opciones'} más barata${conviene.length === 1 ? '' : 's'}.</b>` : '✓ Ninguna es más barata que tu búsqueda: quédate con ' + esc(B.destino.iata) + '.'}</div>` +
+          j.opciones.map(o => `<div class="vrow2"><div><b>${o.tipo === 'destino' ? 'Llegar a ' + esc(o.nombre) : 'Salir desde ' + esc(o.nombre)}</b>
+            <small>${o.tipo === 'destino' ? `${esc(o.aerolinea)} · ${o.directo ? 'directo' : esc(o.duracion)}` : `${esc(o.iata)} → ${esc(B.destino.iata)} ${CLP(o.precio)} (${esc(o.aerolinea)}) + Santiago ↔ ${esc(o.nombre)} ${CLP(o.tramo.precio)} (${esc(o.tramo.aerolinea)}, llegas el día antes y vuelves el día después)`}</small>
+            <small>${dif(o.total)}</small></div><b>${CLP(o.total)}</b></div>`).join('') +
+          (j.opciones.some(o => o.tipo === 'origen') ? '<div class="gfoot" style="padding:0">Salir desde otro país son dos reservas separadas: si el primer vuelo se atrasa, la otra aerolínea no responde. Suma hotel de una noche.</div>' : '');
+      } catch (e) { out.innerHTML = '<div class="gfoot">No pude revisar ahora. Inténtalo de nuevo.</div>'; }
+    };
+    if (!$('ahMc')) return;
+    $('ahMc').onclick = () => {
+      marcar('ahMc');
+      const region = (DESTINOS.find(x => x[0] === B.destino.iata) || [])[2];
+      const ops = DESTINOS.filter(x => x[2] === region && x[0] !== B.destino.iata).map(x => [x[0], x[1]]).concat(EXTRA_MC[region] || []).filter((x, i, a) => a.findIndex(y => y[0] === x[0]) === i && x[0] !== B.destino.iata);
+      out.innerHTML = `<div class="gfoot" style="padding:4px 0">Llegas a ${esc(B.destino.ciudad)} el ${fCorta(f.ida)} y vuelves a Santiago desde otra ciudad el ${fCorta(f.vuelta)}, en un solo pasaje.</div>
+        <div style="display:flex;gap:8px"><select id="mcDesde" class="inp" style="flex:1">${ops.map(x => `<option value="${x[0]}">${esc(x[1])} (${x[0]})</option>`).join('')}<option value="otro">Otra (código de 3 letras)…</option></select>
+        <button type="button" class="btn" id="mcIr" style="width:auto;padding:10px 16px">Comparar</button></div><div id="mcOut"></div>`;
+      $('mcIr').onclick = async () => {
+        let d2 = $('mcDesde').value;
+        if (d2 === 'otro') d2 = (prompt('Código del aeropuerto desde donde vuelves (ej. FCO):') || '').trim().toUpperCase();
+        if (!/^[A-Z]{3}$/.test(d2)) return;
+        $('mcOut').innerHTML = cargandoTxt('Buscando el pasaje con dos ciudades… unos 10 segundos.');
+        try {
+          const j = await api({ accion: 'multiciudad', origen: ORI().iata, destino: B.destino.iata, desde: d2, ida: f.ida, vuelta: f.vuelta, clase: B.clase });
+          if (!j.ok || !j.min) throw new Error();
+          const v = j.vuelos[0];
+          $('mcOut').innerHTML = `<div class="vrow2"><div><b>Ida a ${esc(B.destino.iata)}, vuelta desde ${esc(d2)}</b><small>${esc(v.aerolinea)} · ida ${esc(v.sale)} → ${esc(v.llega)} · ${esc(v.duracion)}</small><small>${dif(j.min)} que ida y vuelta a ${esc(B.destino.iata)}</small></div><b>${CLP(j.min)}</b></div>
+            <div class="gfoot" style="padding:0">Precio por persona por todo el viaje, total para ${P}: ${CLP(j.min * P)}. Entre ${esc(B.destino.ciudad)} y la otra ciudad te mueves por tu cuenta (tren o bus).</div>
+            <a class="btn plain" style="padding:11px;font-size:15px" href="${esc(j.link)}" target="_blank" rel="noopener noreferrer">Ver en Google Flights y elegir "Reservar con la aerolínea" ↗</a>`;
+        } catch (e) { $('mcOut').innerHTML = '<div class="gfoot">No encontré ese pasaje. Prueba con otra ciudad.</div>'; }
+      };
+    };
+    $('ahGr').onclick = async () => {
+      marcar('ahGr');
+      const n = Math.round((D(f.vuelta) - D(f.ida)) / 864e5);
+      const NO = [n - 3, n, n + 3, n + 7].filter((x, i, a) => x > 0 && a.indexOf(x) === i);
+      const IDAS = [-2, -1, 0, 1, 2].map(k => iso(new Date(D(f.ida).getTime() + k * 864e5))).filter(x => x > hoyIso());
+      const combos = []; IDAS.forEach(i => NO.forEach(m => combos.push([i, iso(new Date(D(i).getTime() + m * 864e5))])));
+      out.innerHTML = cargandoTxt(`Revisando ${combos.length} combinaciones de ida y vuelta… unos 10 segundos.`);
+      const tandas = []; for (let i = 0; i < combos.length; i += 7) tandas.push(combos.slice(i, i + 7));
+      const celdas = {};
+      await Promise.all(tandas.map(async t => { try { const j = await api({ accion: 'grilla', origen: ORI().iata, destino: B.destino.iata, clase: B.clase, combos: t.map(c => c.join('_')).join(',') }); if (j.ok) j.celdas.forEach(c => celdas[c.ida + '_' + c.vuelta] = c); } catch (e) {} }));
+      const vals = Object.values(celdas).filter(c => c.min).map(c => c.min);
+      if (!vals.length) { out.innerHTML = '<div class="gfoot">No pude traer la tabla ahora. Inténtalo de nuevo.</div>'; return; }
+      const mn = Math.min(...vals), propia = celdas[f.ida + '_' + f.vuelta];
+      const best = propia && propia.min === mn ? propia : Object.values(celdas).find(c => c.min === mn);
+      out.innerHTML = `<div class="gfoot" style="padding:4px 0">Precio por persona. Filas: día de ida. Columnas: noches. Toca un precio para ver esos vuelos.</div>
+        <div class="grilla"><table><thead><tr><th>Ida</th>${NO.map(m => `<th>${m} n</th>`).join('')}</tr></thead><tbody>
+        ${IDAS.map(i => `<tr><th>${fCorta(i)}</th>${NO.map(m => { const c = celdas[i + '_' + iso(new Date(D(i).getTime() + m * 864e5))]; return c && c.min ? `<td><button type="button" class="${c.min === mn ? 'gmin' : ''} ${i === f.ida && m === n ? 'gact' : ''}" data-g="${c.ida}_${c.vuelta}">$${Math.round(c.min / 1000)}k</button></td>` : '<td>—</td>'; }).join('')}</tr>`).join('')}
+        </tbody></table></div>
+        <div class="gfoot" style="padding:0">Lo más barato: <b>${fCorta(best.ida)} → ${fCorta(best.vuelta)}</b>, ${CLP(mn)} por persona (${esc(best.aerolinea)})${mn < base ? `: ${dif(mn)}` : ': tus fechas ya son las más baratas'}.</div>`;
+      out.querySelectorAll('[data-g]').forEach(b => b.onclick = () => { const [i, v] = b.dataset.g.split('_'); window.vuelosIrABuscar({ origen: ORI(), destino: B.destino, ida: i, vuelta: v, modo: 'rt', a: B.a, n: B.n, b: B.b, clase: B.clase }); });
+    };
   }
   // Sitios oficiales: para comprar sin agencias ni comisiones.
   const OFICIAL = [['LATAM','https://www.latamairlines.com/cl/es'],['Iberia','https://www.iberia.com/cl/'],['Air Canada','https://www.aircanada.com/cl/es/'],['Avianca','https://www.avianca.com/cl/es/'],
@@ -606,7 +721,7 @@
         const fuera = presu && x.min > presu, oferta = x.tipico && x.min < x.tipico[0];
         return `<button type="button" class="glass excard ${fuera ? 'fuera' : ''}" data-ex="${x.iata}">
           <span class="ext"><b>${esc(info[x.iata][1])}</b><small>${esc(info[x.iata][2])} · ${esc(x.aerolinea || '')}${x.directo ? ' · directo' : ''} · ${esc(x.duracion || '')}</small>
-          ${oferta ? '<span class="badge b-green">🔥 bajo su precio normal</span>' : ''}${fuera ? '<span class="badge b-red">sobre tu máximo</span>' : ''}</span>
+          ${x.tipico && x.min < x.tipico[0] * 0.6 ? '<span class="badge b-orange">⚡ posible tarifa error</span>' : oferta ? '<span class="badge b-green">🔥 bajo su precio normal</span>' : ''}${fuera ? '<span class="badge b-red">sobre tu máximo</span>' : ''}</span>
           <span class="exp"><b>${CLP(x.min)}</b><small>total ${CLP(x.min * P)}</small></span></button>`;
       }).join('') + '<div class="gfoot">Toca un destino para ver sus vuelos y fechas cercanas. Para ver todo el mes, pídeselo al Asistente.</div>';
     $('exRes').querySelectorAll('[data-ex]').forEach(x => x.onclick = () => {
@@ -682,7 +797,7 @@
   if (!AEROS) fetch('aeropuertos.json?v=1').then(r => r.json()).then(j => { AEROS = AEROS || j; Object.keys(AEROS).forEach(cc => AEROS[cc].forEach(z => PAIS_DE[z[0]] = cc)); pintarViajes(); }).catch(() => {});
 
   function minutos(s) { const h = (s.match(/(\d+) h/) || [])[1] || 0, m = (s.match(/(\d+) min/) || [])[1] || 0; return h * 60 + +m; }
-  function tarjeta(v, mejor, rapido, P) {
+  function tarjeta(v, mejor, rapido, P, idx) {
     const ex = extras(v, B.destino.cc);
     const etiqueta = mejor ? '<span class="badge b-blue" style="margin:0;background:var(--tint);color:var(--tintInk)">Más barato</span>'
       : rapido ? '<span class="badge b-green" style="margin:0">Directo · mejor precio</span>'
@@ -696,6 +811,7 @@
       ${ex.map(([k, t]) => `<div class="extra ${k === 'ok' ? 'ok' : 'ojo'}"><span>${k === 'ok' ? '✓' : k === 'info' ? 'ℹ' : '⚠'}</span><span>${esc(t)}</span></div>`).join('')}
       <div class="vprecio"><span class="pp">${CLP(v.precio)} por persona<br>tasas incluidas · equipaje según tarifa</span><span class="tot"><b>${CLP(v.precio * P)}</b><span>total ${P} ${P === 1 ? 'persona' : 'personas'}</span></span></div>
       ${guiaTarifa(v.aerolinea, B.destino.cc)}
+      ${v.segs && v.segs.length ? `<button type="button" class="tintlink" style="text-align:left" data-vend="${idx}">🏷️ ¿Quién lo vende más barato? Aerolínea o agencias</button><div data-vend-out="${idx}"></div>` : ''}
       ${(o => o ? `<a class="btn plain" style="padding:11px;font-size:15px" href="${o.url}" target="_blank" rel="noopener noreferrer">Comprar directo en ${esc(o.nombre)} ↗</a>` : '')(oficial(v.aerolinea))}
     </div>`;
   }
