@@ -311,3 +311,11 @@ details.guia td.no{color:var(--warn)}
 .graf .gl{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:11px;color:var(--label2)}
 .graf .gl i{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:4px;vertical-align:-1px}
 .graf .gev{margin:0;padding-left:16px;font-size:12.5px;line-height:1.5}
+
+/* explorar */
+.excard{display:flex;justify-content:space-between;align-items:center;gap:10px;border-radius:20px;padding:12px 14px;color:#fff;text-align:left;cursor:pointer;font:inherit;width:100%}
+.excard.fuera{opacity:.55}
+.excard .ext{display:grid;gap:2px;min-width:0}
+.excard .ext small,.excard .exp small{font-size:12px;color:var(--label2)}
+.excard .exp{text-align:right;display:grid;flex:none}
+.excard .exp b{font-size:19px}

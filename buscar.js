@@ -12,7 +12,7 @@
   const hoyIso = () => { const d = new Date(); return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), 12)).toISOString().slice(0, 10); };
 
   // ---------- estado (se recuerda en el teléfono)
-  let B = { modo: 'rt', origen: { iata: 'SCL', ciudad: 'Santiago', aeropuerto: 'Arturo Merino Benítez', pais: 'Chile', cc: 'CL' }, destino: null, ida: null, vuelta: null, a: 2, n: 0, b: 0, clase: 'turista' };
+  let B = { maleta: 'no', modo: 'rt', origen: { iata: 'SCL', ciudad: 'Santiago', aeropuerto: 'Arturo Merino Benítez', pais: 'Chile', cc: 'CL' }, destino: null, ida: null, vuelta: null, a: 2, n: 0, b: 0, clase: 'turista' };
   try { Object.assign(B, JSON.parse(localStorage.getItem('busqueda') || '{}')); } catch (e) {}
   if (B.ida && B.ida < hoyIso()) { B.ida = null; B.vuelta = null; }
   const guardar = () => { try { localStorage.setItem('busqueda', JSON.stringify(B)); } catch (e) {} };
@@ -23,6 +23,7 @@
   const PANT = ['home', 'pais', 'ciudad', 'fechas', 'personas', 'res'];
   function ver(p) {
     PANT.forEach(x => $('bs-' + x).hidden = x !== p);
+    $('bs-explorar').hidden = p !== 'explorar';
     $('bsPieFechas').hidden = p !== 'fechas' || !B.ida;
     document.querySelector('.tabbar').hidden = p === 'fechas';
     window.scrollTo(0, 0);
@@ -37,7 +38,7 @@
     const p = [`${B.a} ${B.a === 1 ? 'adulto' : 'adultos'}`];
     if (B.n) p.push(`${B.n} ${B.n === 1 ? 'niño' : 'niños'}`);
     if (B.b) p.push(`${B.b} ${B.b === 1 ? 'bebé' : 'bebés'}`);
-    return p.join(', ') + ' · ' + { turista: 'Turista', premium: 'Premium', ejecutiva: 'Ejecutiva' }[B.clase];
+    return p.join(', ') + ' · ' + { turista: 'Turista', premium: 'Premium', ejecutiva: 'Ejecutiva' }[B.clase] + (B.maleta === 'mano' ? ' · maleta de mano' : B.maleta === 'bodega' ? ' · maleta en bodega' : '');
   }
   function noches() { return B.ida && B.vuelta ? Math.round((D(B.vuelta) - D(B.ida)) / 864e5) : 0; }
   function pintarHome() {
@@ -288,6 +289,7 @@
         <div class="barras" id="bsBarras">${barras}</div>
         <div class="gfoot" style="padding:8px 10px 2px">Verde = más barato. ${RES.vuelta ? `La vuelta es siempre ${noches()} noches después.` : ''} ${RES.desdeMemoria ? 'Búsqueda de hace menos de 30 min (no se repitió).' : ''}</div>
       </div>
+      ${dosIdasCard(f, P)}
       ${consejo(f)}
       ${grafico(f, P)}
       ${comparacionKayak(f, P)}
@@ -557,6 +559,128 @@
       <div class="gfoot" style="padding:0;color:var(--label3)">Datos de Google Flights: precio por persona de estas mismas fechas, día a día. Google guarda unos 2 meses; desde ahora la app guardará su propio historial de lo que sigas.</div>
     </div>`;
   }
+  // ---------- 1) Explorar destinos
+  const DESTINOS = [
+    ['IPC', 'Isla de Pascua', 'Chile'], ['PUQ', 'Punta Arenas', 'Chile'], ['CJC', 'Calama (San Pedro)', 'Chile'], ['PMC', 'Puerto Montt', 'Chile'],
+    ['LIM', 'Lima', 'Sudamérica'], ['CUZ', 'Cusco', 'Sudamérica'], ['EZE', 'Buenos Aires', 'Sudamérica'], ['MDZ', 'Mendoza', 'Sudamérica'], ['BRC', 'Bariloche', 'Sudamérica'],
+    ['GRU', 'São Paulo', 'Sudamérica'], ['GIG', 'Río de Janeiro', 'Sudamérica'], ['FLN', 'Florianópolis', 'Sudamérica'], ['SSA', 'Salvador de Bahía', 'Sudamérica'],
+    ['MVD', 'Montevideo', 'Sudamérica'], ['BOG', 'Bogotá', 'Sudamérica'], ['CTG', 'Cartagena', 'Sudamérica'], ['MDE', 'Medellín', 'Sudamérica'], ['UIO', 'Quito', 'Sudamérica'],
+    ['MIA', 'Miami', 'Norteamérica'], ['MCO', 'Orlando', 'Norteamérica'], ['JFK', 'Nueva York', 'Norteamérica'], ['LAX', 'Los Ángeles', 'Norteamérica'], ['MEX', 'Ciudad de México', 'Norteamérica'], ['CUN', 'Cancún', 'Norteamérica'],
+    ['PUJ', 'Punta Cana', 'Caribe'], ['PTY', 'Panamá', 'Caribe'], ['SJO', 'San José (Costa Rica)', 'Caribe'], ['HAV', 'La Habana', 'Caribe'],
+    ['MAD', 'Madrid', 'Europa'], ['BCN', 'Barcelona', 'Europa'], ['LIS', 'Lisboa', 'Europa'], ['CDG', 'París', 'Europa'], ['FCO', 'Roma', 'Europa'], ['LHR', 'Londres', 'Europa'],
+    ['SYD', 'Sídney', 'Oceanía'], ['AKL', 'Auckland', 'Oceanía']
+  ];
+  let EX_REGION = 'todos';
+  function prepararExplorar() {
+    const d = D(hoyIso()); let html = '';
+    for (let k = 0; k < 12; k++) { const m = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + k, 1, 12)); html += `<option value="${iso(m).slice(0, 7)}">${MESES[m.getUTCMonth()][0].toUpperCase() + MESES[m.getUTCMonth()].slice(1)} ${m.getUTCFullYear()}</option>`; }
+    $('exMes').innerHTML = html; if (!$('exMes').value) $('exMes').selectedIndex = 1;
+  }
+  $('exRegion').querySelectorAll('button').forEach(x => x.onclick = () => { EX_REGION = x.dataset.r; $('exRegion').querySelectorAll('button').forEach(y => y.setAttribute('aria-pressed', y === x)); });
+  $('bsExplorarBtn').onclick = () => { prepararExplorar(); ver('explorar'); };
+  $('exBuscar').onclick = async () => {
+    if (!conf.url || !conf.key) { $('gearBtn').click(); return; }
+    const [y, m] = $('exMes').value.split('-').map(Number), noches = +$('exNoches').value, presu = +$('exPresu').value || 0;
+    // fecha: el primer martes del mes que esté a 14 días o más
+    let d = new Date(Date.UTC(y, m - 1, 1, 12)); const min = new Date(D(hoyIso()).getTime() + 14 * 864e5);
+    if (d < min) d = min;
+    while (d.getUTCDay() !== 2) d = new Date(d.getTime() + 864e5);
+    const ida = iso(d), vuelta = noches ? iso(new Date(d.getTime() + noches * 864e5)) : '';
+    const lista = DESTINOS.filter(x => (EX_REGION === 'todos' || x[2] === EX_REGION) && x[0] !== ORI().iata);
+    const P = B.a + B.n;
+    $('exRes').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#ffc98b" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Revisando ${lista.length} destinos…</b><span class="gfoot">Salida ${fCorta(ida)}${vuelta ? ', vuelta ' + fCorta(vuelta) : ', solo ida'}. Unos 15 segundos.</span></div>`;
+    const tandas = []; for (let i = 0; i < lista.length; i += 8) tandas.push(lista.slice(i, i + 8));
+    const res = [];
+    await Promise.all(tandas.map(async t => {
+      try {
+        const q = new URLSearchParams({ clave: conf.key, accion: 'explorar', origen: ORI().iata, destinos: t.map(x => x[0]).join(','), ida, vuelta, clase: B.clase });
+        const j = await (await fetch(conf.url + (conf.url.includes('?') ? '&' : '?') + q)).json();
+        if (j.ok) res.push(...j.destinos);
+      } catch (e) {}
+    }));
+    const info = Object.fromEntries(DESTINOS.map(x => [x[0], x]));
+    const ok = res.filter(x => x.min).sort((p, q) => p.min - q.min);
+    if (!ok.length) { $('exRes').innerHTML = '<div class="empty glass" style="border-radius:20px">No pude traer precios ahora. Inténtalo de nuevo en un momento.</div>'; return; }
+    $('exRes').innerHTML = `<div class="gfoot">${ok.length} destinos · salida ${fCorta(ida)}${vuelta ? ' → ' + fCorta(vuelta) : ' (solo ida)'} · precio por persona con tasas · total para ${P}</div>` +
+      ok.map(x => {
+        const fuera = presu && x.min > presu, oferta = x.tipico && x.min < x.tipico[0];
+        return `<button type="button" class="glass excard ${fuera ? 'fuera' : ''}" data-ex="${x.iata}">
+          <span class="ext"><b>${esc(info[x.iata][1])}</b><small>${esc(info[x.iata][2])} · ${esc(x.aerolinea || '')}${x.directo ? ' · directo' : ''} · ${esc(x.duracion || '')}</small>
+          ${oferta ? '<span class="badge b-green">🔥 bajo su precio normal</span>' : ''}${fuera ? '<span class="badge b-red">sobre tu máximo</span>' : ''}</span>
+          <span class="exp"><b>${CLP(x.min)}</b><small>total ${CLP(x.min * P)}</small></span></button>`;
+      }).join('') + '<div class="gfoot">Toca un destino para ver sus vuelos y fechas cercanas. Para ver todo el mes, pídeselo al Asistente.</div>';
+    $('exRes').querySelectorAll('[data-ex]').forEach(x => x.onclick = () => {
+      const i = info[x.dataset.ex], cc = PAIS_DE[i[0]] || '';
+      window.vuelosIrABuscar({ origen: ORI(), destino: { iata: i[0], ciudad: i[1], pais: cc ? nomPais(cc) : i[2], cc }, ida, vuelta, modo: vuelta ? 'rt' : 'ow', a: B.a, n: B.n, b: B.b, clase: B.clase });
+    });
+  };
+
+  // ---------- 2) dos pasajes solo ida
+  function dosIdasCard(f, P) {
+    const d = f.dosIdas; if (!d || !f.min) return '';
+    const ahorro = f.min - d.total;
+    const linea = (v, t) => `<div class="ktramo"><span class="kt">${t}</span><b>${esc(v.sale)} → ${esc(v.llega)}${v.masDias ? '<sup>+' + v.masDias + '</sup>' : ''}</b><span>${esc(v.aerolinea)} · ${esc(v.duracion)} · ${v.directo ? 'directo' : esc(v.paradas)} · ${CLP(v.precio)}</span></div>`;
+    if (ahorro > f.min * 0.01) return `<div class="hero" style="border-color:rgba(125,240,176,.6)"><span class="k" style="color:var(--ok)">✂️ Dos pasajes solo ida: más barato</span>
+      <p>Comprando la ida y la vuelta por separado pagas <b>${CLP(d.total)}</b> por persona: <b>${CLP(ahorro)} menos</b> (${CLP(ahorro * P)} para ${P}).</p>${linea(d.ida, 'Ida')}${linea(d.vuelta, 'Vuelta')}
+      <div class="gfoot" style="padding:0">Ojo: son dos reservas separadas. Si la ida se atrasa o cambia, la aerolínea de la vuelta no responde.</div></div>`;
+    return `<div class="gfoot">✓ Revisé dos pasajes solo ida (${CLP(d.total)} por persona): no conviene, el ida y vuelta es más barato.</div>`;
+  }
+
+  // ---------- 3) equipaje real
+  function equipaje(v) {
+    if (B.maleta === 'no') return '';
+    const P = B.a + B.n, tramos = RES && RES.vuelta ? 2 : 1;
+    const aer = (v.aerolinea || '').replace(/Jet · SMART/g, 'JetSMART').split(/[·,]/)[0].trim().toLowerCase();
+    const sudam = ['AR', 'BO', 'BR', 'CL', 'CO', 'EC', 'PY', 'PE', 'UY', 'VE'].includes(B.destino.cc);
+    let t;
+    if (aer.startsWith('jetsmart')) { const c = B.maleta === 'mano' ? 12900 : 13000; t = `+ ${CLP(c * tramos * P)} en total (desde ${CLP(c)} por persona y tramo, comprándola junto con el pasaje). Total con maleta: <b>${CLP((v.precio + c * tramos) * P)}</b>.`; }
+    else if (aer.startsWith('latam')) t = B.maleta === 'mano' ? (sudam ? 'En LATAM, la tarifa Basic no trae maleta de mano: elige Light o superior.' : 'Incluida: LATAM trae maleta de mano de 12 kg desde la tarifa Light.') : 'En LATAM, la maleta en bodega viene desde la tarifa Standard; en Light se paga aparte.';
+    else if (aer.startsWith('sky')) t = B.maleta === 'mano' ? 'En SKY, la maleta de mano viene en Light, Max y Max Flex (no en Basic ni Standard).' : 'En SKY, la bodega viene en Standard, Max y Max Flex.';
+    else t = 'Esta aerolínea no publica el precio de la maleta: revisa la tabla de tarifas antes de pagar.';
+    return `<div class="extra" style="color:var(--label)"><span>🧳</span><span>${B.maleta === 'mano' ? 'Con maleta de mano' : 'Con maleta en bodega'}: ${t}</span></div>`;
+  }
+  $('bsMaleta').querySelectorAll('button').forEach(x => x.onclick = () => { B.maleta = x.dataset.m; guardar(); $('bsMaleta').querySelectorAll('button').forEach(y => y.setAttribute('aria-pressed', y === x)); pintarHome(); });
+  $('bsMaleta').querySelectorAll('button').forEach(y => y.setAttribute('aria-pressed', y.dataset.m === B.maleta));
+
+  // ---------- 5) Mis viajes
+  let VIAJES = [];
+  window.vuelosViajes = l => { VIAJES = l || []; pintarViajes(); };
+  function pintarViajes() {
+    const cont = $('viajes'); if (!cont) return;
+    const hoy = hoyIso(), L = VIAJES.filter(x => x.fecha >= hoy);
+    if (!L.length) { cont.innerHTML = '<div class="empty glass" style="border-radius:20px">No tienes vuelos guardados. Agrega uno abajo y te aviso del check-in y de su estado.</div>'; return; }
+    cont.innerHTML = L.map(x => {
+      const dias = Math.round((D(x.fecha) - D(hoy)) / 864e5);
+      const cc = PAIS_DE[x.destino] || '';
+      const docs = cc ? notasDestino(cc) : [];
+      return `<div class="glass segcard">
+        <div class="top"><b>${esc(x.numero)} · ${esc(x.origen || '')} → ${esc(x.destino || '')}</b><span class="aer">${fCorta(x.fecha)}${x.hora ? ' · ' + esc(x.hora) : ''}</span></div>
+        <div><b style="font-size:20px">${dias === 0 ? '¡Hoy!' : dias === 1 ? 'Mañana' : 'En ' + dias + ' días'}</b>${dias <= 2 ? ' <span class="badge b-orange">check-in abierto o por abrir</span>' : ''}</div>
+        ${docs.map(t => `<div class="extra ojo"><span>📄</span><span>${esc(t)}</span></div>`).join('')}
+        <div class="extra" style="color:var(--label2)"><span>🛂</span><span>Pasaporte o carnet vigente. El check-in online suele abrir 24 a 48 horas antes en la app de la aerolínea.</span></div>
+        <div id="est-${esc(x.id)}" class="gfoot" style="padding:0"></div>
+        <div style="display:flex;gap:18px"><button type="button" class="tintlink" data-est="${esc(x.id)}">Ver estado del vuelo</button><button type="button" class="tintlink" style="color:var(--bad)" data-qv="${esc(x.id)}">Quitar</button></div>
+      </div>`;
+    }).join('');
+    cont.querySelectorAll('[data-est]').forEach(btn => btn.onclick = async () => {
+      const x = VIAJES.find(v => v.id === btn.dataset.est), out = $('est-' + x.id);
+      out.textContent = 'Consultando…';
+      try {
+        const j = await (await fetch(conf.url + (conf.url.includes('?') ? '&' : '?') + new URLSearchParams({ clave: conf.key, accion: 'estadoVuelo', numero: x.numero, fecha: x.fecha }))).json();
+        out.innerHTML = j.ok ? `<b style="color:#fff">${esc(j.estado)}</b>${j.atraso ? ' · ' + esc(j.atraso) : ''}${j.puerta ? ' · Puerta ' + esc(j.puerta) : ''}<br><span style="color:var(--label3)">${esc(j.nota)} Fuente: FlightAware.</span>` : 'No encontré información de ese vuelo.';
+      } catch (e) { out.textContent = 'Sin conexión.'; }
+    });
+    cont.querySelectorAll('[data-qv]').forEach(btn => btn.onclick = async () => { btn.disabled = true; try { await enviar({ accion: 'quitarViaje', id: btn.dataset.qv }); } catch (e) { btn.disabled = false; } });
+  }
+  $('vjForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const viaje = { numero: $('vjNum').value, fecha: $('vjFecha').value, origen: $('vjOri').value, destino: $('vjDes').value, hora: $('vjHora').value };
+    $('vjMsg').textContent = 'Guardando…';
+    try { await enviar({ accion: 'agregarViaje', viaje }); $('vjMsg').textContent = 'Guardado. Te aviso 2 días antes y el día del vuelo.'; $('vjForm').reset(); }
+    catch (err) { $('vjMsg').textContent = err.message === 'parametros' ? 'Revisa el número de vuelo (ej. LA500) y la fecha.' : 'No se pudo guardar.'; }
+  });
+  if (!AEROS) fetch('aeropuertos.json?v=1').then(r => r.json()).then(j => { AEROS = AEROS || j; Object.keys(AEROS).forEach(cc => AEROS[cc].forEach(z => PAIS_DE[z[0]] = cc)); pintarViajes(); }).catch(() => {});
+
   function minutos(s) { const h = (s.match(/(\d+) h/) || [])[1] || 0, m = (s.match(/(\d+) min/) || [])[1] || 0; return h * 60 + +m; }
   function tarjeta(v, mejor, rapido, P) {
     const ex = extras(v, B.destino.cc);
@@ -568,6 +692,7 @@
       <div class="leg"><div><div class="t">${esc(v.sale)}</div><div class="c">${esc(ORI().iata)}</div></div>
         <div class="mid">${esc(v.duracion)}<span class="rule"></span>${esc(v.directo ? 'Directo' : (v.paradas + (v.escalaTexto ? ' · ' + v.escalaTexto : '')))}</div>
         <div style="text-align:right"><div class="t">${esc(v.llega)}${v.masDias ? `<sup style="font-size:11px">+${v.masDias}</sup>` : ''}</div><div class="c">${esc(B.destino.iata)}</div></div></div>
+      ${equipaje(v)}
       ${ex.map(([k, t]) => `<div class="extra ${k === 'ok' ? 'ok' : 'ojo'}"><span>${k === 'ok' ? '✓' : k === 'info' ? 'ℹ' : '⚠'}</span><span>${esc(t)}</span></div>`).join('')}
       <div class="vprecio"><span class="pp">${CLP(v.precio)} por persona<br>tasas incluidas · equipaje según tarifa</span><span class="tot"><b>${CLP(v.precio * P)}</b><span>total ${P} ${P === 1 ? 'persona' : 'personas'}</span></span></div>
       ${guiaTarifa(v.aerolinea, B.destino.cc)}

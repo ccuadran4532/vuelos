@@ -11,7 +11,7 @@
 <title>Vuelos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="styles.css?v=23">
+<link rel="stylesheet" href="styles.css?v=24">
 </head>
 <body>
 <div class="luces" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -74,9 +74,27 @@
         <button type="button" class="btn" id="bsBuscar"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>Buscar vuelos</button>
         <div class="gfoot" id="bsMsg" style="text-align:center"></div>
       </div>
+      <button type="button" class="banner glass" id="bsExplorarBtn"><span class="bi">🌎</span><span><b>Explorar destinos baratos</b><br><small>"Tengo 7 días en marzo: ¿a dónde puedo ir?"</small></span></button>
       <button type="button" class="banner glass" id="bsBanner"><span class="bi">🎤</span><span><b>Pídemelo con tus palabras</b><br><small>"Vuelo barato a Lima en marzo para 3 personas"</small></span></button>
       <div class="group" id="bsRecG" hidden><div class="ghead">Búsquedas recientes</div><div class="recientes" id="bsRec"></div></div>
       <div class="gfoot">Cada búsqueda la hace tu servidor en Google Flights sin cookies ni historial, como una ventana de incógnito. Si repites la misma búsqueda antes de 30 minutos, se usa la respuesta guardada.</div>
+    </div>
+
+    <!-- explorar -->
+    <div class="view" id="bs-explorar" hidden>
+      <div class="titulo"><button type="button" class="redondo" data-atras="home" aria-label="Volver">‹</button><h2>Explorar destinos</h2></div>
+      <div class="list">
+        <div class="field"><label for="exMes">Mes</label><select id="exMes"></select></div>
+        <div class="field"><label for="exNoches">Noches</label><select id="exNoches"><option>3</option><option>5</option><option selected>7</option><option>10</option><option>14</option><option value="0">Solo ida</option></select></div>
+        <div class="field"><label for="exPresu">Máximo por persona</label><input id="exPresu" type="number" inputmode="numeric" placeholder="opcional, ej. 300000"></div>
+      </div>
+      <div class="chips" id="exRegion" style="flex-wrap:wrap">
+        <button type="button" data-r="todos" aria-pressed="true">Todos</button><button type="button" data-r="Chile" aria-pressed="false">Chile</button><button type="button" data-r="Sudamérica" aria-pressed="false">Sudamérica</button>
+        <button type="button" data-r="Norteamérica" aria-pressed="false">Norteamérica</button><button type="button" data-r="Caribe" aria-pressed="false">Caribe y Centroamérica</button>
+        <button type="button" data-r="Europa" aria-pressed="false">Europa</button><button type="button" data-r="Oceanía" aria-pressed="false">Oceanía</button>
+      </div>
+      <button type="button" class="btn" id="exBuscar">🌎 Explorar</button>
+      <div class="view" id="exRes" style="gap:10px"></div>
     </div>
 
     <!-- país -->
@@ -111,6 +129,12 @@
         <div class="field"><label>Adultos<br><small style="font-weight:600;color:var(--label2)">12 años o más</small></label><div class="stepper"><button type="button" data-p="a" data-d="-1" aria-label="Quitar adulto">−</button><b id="bsA">2</b><button type="button" data-p="a" data-d="1" aria-label="Agregar adulto">+</button></div></div>
         <div class="field"><label>Niños<br><small style="font-weight:600;color:var(--label2)">2 a 11 años</small></label><div class="stepper"><button type="button" data-p="n" data-d="-1" aria-label="Quitar niño">−</button><b id="bsN">0</b><button type="button" data-p="n" data-d="1" aria-label="Agregar niño">+</button></div></div>
         <div class="field"><label>Bebés<br><small style="font-weight:600;color:var(--label2)">Menores de 2, en brazos</small></label><div class="stepper"><button type="button" data-p="b" data-d="-1" aria-label="Quitar bebé">−</button><b id="bsB">0</b><button type="button" data-p="b" data-d="1" aria-label="Agregar bebé">+</button></div></div>
+      </div>
+      <div class="ghead">Equipaje que llevas</div>
+      <div class="seg tres" id="bsMaleta" role="group" aria-label="Equipaje">
+        <button type="button" data-m="no" aria-pressed="true">Solo mochila</button>
+        <button type="button" data-m="mano" aria-pressed="false">+ Maleta de mano</button>
+        <button type="button" data-m="bodega" aria-pressed="false">+ Bodega</button>
       </div>
       <div class="ghead">Clase</div>
       <div class="seg tres" id="bsClase" role="group" aria-label="Clase">
@@ -163,6 +187,18 @@
   <!-- DESTINOS -->
   <section class="view" id="v-mis" hidden>
     <div><h1 class="large">Destinos</h1><p class="sub">Tus búsquedas seguidas y tus destinos con precio máximo.</p></div>
+    <div class="group"><div class="ghead">✈️ Mis viajes</div><div class="view" id="viajes" style="gap:10px"></div>
+      <details class="glass" style="border-radius:20px;padding:4px 0"><summary style="padding:10px 16px;font-weight:800;cursor:pointer">+ Agregar un vuelo que compré</summary>
+        <form id="vjForm" style="display:grid;gap:8px;padding:6px 12px 12px">
+          <div class="list">
+            <div class="field"><label for="vjNum">N° de vuelo</label><input id="vjNum" placeholder="LA500" autocapitalize="characters" autocomplete="off" required></div>
+            <div class="field"><label for="vjFecha">Fecha</label><input id="vjFecha" type="date" required></div>
+            <div class="field"><label for="vjOri">Desde</label><input id="vjOri" placeholder="SCL" maxlength="3" autocapitalize="characters"></div>
+            <div class="field"><label for="vjDes">Hacia</label><input id="vjDes" placeholder="MIA" maxlength="3" autocapitalize="characters"></div>
+            <div class="field"><label for="vjHora">Hora de salida</label><input id="vjHora" type="time"></div>
+          </div>
+          <button class="btn" type="submit">Guardar vuelo</button><div class="gfoot" id="vjMsg">Te aviso 2 días antes para el check-in y el día del vuelo con su estado.</div>
+        </form></details></div>
     <div class="group"><div class="ghead">🔔 Búsquedas que sigo</div><div class="view" id="seguidos" style="gap:10px"></div>
       <div class="gfoot">Se revisan solas a las 8:00 y a las 20:00, aunque tu PC esté apagado. Si el precio baja 5% o más, te llega una notificación al celular.</div></div>
     <form class="group" id="addf">
@@ -173,7 +209,7 @@
         <div class="field"><label for="aMax">Máx. por persona</label><input id="aMax" type="number" inputmode="numeric" placeholder="250.000"></div>
         <div class="field"><label for="aPay">Pagar con</label><select id="aPay"><option value="cualquiera" selected>Lo que convenga</option><option value="millas">Millas LATAM Pass</option><option value="dinero">Dinero</option></select></div>
       </div>
-      <div class="gfoot" id="addMsg">El precio máximo es por persona, ida y vuelta, en pesos. La revisión de cada mañana incluye tus destinos.</div>
+      <div class="gfoot" id="addMsg">El precio máximo es por persona, ida y vuelta, en pesos. Cada día reviso tus destinos y te aviso al celular si bajan de su precio normal o de tu máximo (🔥 Oferta de verdad).</div>
       <button class="btn" type="submit">Agregar</button>
     </form>
     <div class="group"><div class="ghead">Mis destinos</div><div class="list" id="mis"></div></div>
@@ -238,10 +274,10 @@
   <button type="button" data-v="promos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>Promos</button>
 </div></nav>
 
-<script src="config.js?v=23"></script>
-<script src="app.js?v=23"></script>
-<script src="buscar.js?v=23"></script>
-<script src="asistente.js?v=23"></script>
+<script src="config.js?v=24"></script>
+<script src="app.js?v=24"></script>
+<script src="buscar.js?v=24"></script>
+<script src="asistente.js?v=24"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
 </script>

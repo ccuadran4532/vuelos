@@ -144,7 +144,7 @@ function drawMis(){
     return `<div class="cell ic"><span class="tile" style="background:${hit?'var(--green)':'var(--tint)'}">${esc(m.iata)}</span>
       <span class="body"><span class="title">${esc(m.nombre||m.iata)}</span>
       <span class="detail" style="display:block">${best?`Hoy ${CLP(pp)} por persona en ${esc(best.aerolinea)}`:'Sin oferta publicada hoy'}${m.max?` · máx. ${CLP(m.max)}`:''}</span>
-      ${hit?'<span class="badge b-green">Bajo tu precio</span>':''}${m.nota?`<span class="detail" style="display:block;font-size:13px">${esc(m.nota)}</span>`:''}
+      ${hit?'<span class="badge b-green">Bajo tu precio</span>':''}${m.ultimoPrecio?`<span class="detail" style="display:block">Revisado: ${CLP(m.ultimoPrecio.p)} p/p i/v${m.ultimoPrecio.tipico?` · normal ${CLP(m.ultimoPrecio.tipico[0])}–${CLP(m.ultimoPrecio.tipico[1])}`:''}</span>${m.ultimoPrecio.tipico&&m.ultimoPrecio.p<m.ultimoPrecio.tipico[0]?'<span class="badge b-green">🔥 Oferta de verdad</span>':''}`:''}${m.nota?`<span class="detail" style="display:block;font-size:13px">${esc(m.nota)}</span>`:''}
       <span style="display:flex;gap:18px;margin-top:6px">${best?`<button type="button" class="tintlink" data-open="${esc(best.id)}">Ver detalle</button>`:''}<button type="button" class="tintlink" style="color:var(--red)" data-del="${esc(m.id)}">Quitar</button></span></span></div>`}).join('');
   bindOpen($('mis'));
   $('mis').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{b.disabled=true;
@@ -169,7 +169,7 @@ const conf={
 function aplicar(datos,desdeCache){
   OFERTAS=(datos.ofertas||[]).map(o=>({...o,id:o.id||((o.aerolinea||'x').toLowerCase().slice(0,3)+'-'+o.iata)}));
   MIS=(datos.seguimiento||[]).map(m=>({...m,id:m.iata}));
-  TARIFAS=datos.tarifas||{};ALERTAS=datos.alertas||[];if(window.vuelosSeguidos)window.vuelosSeguidos(datos.seguidos||[]);REFRESCADO=datos.refrescado||(datos.estado&&datos.estado.actualizado)||null;drawAlertas();
+  TARIFAS=datos.tarifas||{};ALERTAS=datos.alertas||[];if(window.vuelosSeguidos)window.vuelosSeguidos(datos.seguidos||[]);if(window.vuelosViajes)window.vuelosViajes(datos.viajes||[]);REFRESCADO=datos.refrescado||(datos.estado&&datos.estado.actualizado)||null;drawAlertas();
   drawEstado(datos.estado||null);redraw();drawStamp();
   if(desdeCache)$('stamp').textContent='Sin conexión · '+hace(REFRESCADO);
 }
