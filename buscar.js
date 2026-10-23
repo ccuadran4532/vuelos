@@ -294,7 +294,7 @@
       ${ahorroCard(f)}
       ${consejo(f)}
       ${grafico(f, P)}
-      ${comparacionKayak(f, P)}
+      <div id="autoVend"></div>
       ${f.aviso ? `<div class="hero" style="border-color:rgba(125,240,176,.6)"><p>📈 <b>Google Flights:</b> ${esc(f.aviso.replace(/CLP\s?([\d,]+)/, (m, n) => CLP(+n.replace(/,/g, ''))))}</p></div>` : ''}
       ${notasDestino(B.destino.cc).map(t => `<div class="hero" style="border-color:rgba(255,210,122,.6)"><span class="k" style="color:var(--warn)">Costo aparte del destino</span><p>${esc(t)}</p></div>`).join('')}
       <div class="chips" id="bsFiltros">
@@ -324,6 +324,8 @@
     $('bsFiltros').querySelectorAll('[data-f]').forEach(b => b.onclick = () => { FILTRO = b.dataset.f; pintarRes(); });
     $('bsResCuerpo').querySelectorAll('[data-vend]').forEach(b => b.onclick = () => vendedores(vuelos[+b.dataset.vend], f, P, b));
     conectarAhorro(f, P);
+    autoVendedores(f, P);
+    $('bsResCuerpo').querySelectorAll('[data-compre]').forEach(x => x.onclick = () => compre(vuelos[+x.dataset.compre], f, P, x));
   }
 
   // ---------- más formas de ahorrar
@@ -338,16 +340,47 @@
     try {
       const j = await api({ accion: 'vendedores', origen: ORI().iata, destino: B.destino.iata, ida: f.ida, vuelta: f.vuelta || '', clase: B.clase, segs: JSON.stringify(v.segs) });
       if (!j.ok) throw new Error(j.error);
+      out.innerHTML = htmlVend(j, P);
+    } catch (e) { out.innerHTML = '<div class="gfoot">Google no mostró opciones de compra para este vuelo. Intenta con otro.</div>'; btn.hidden = false; }
+  }
+  function htmlVend(j, P) {
       const aer = j.opciones.filter(o => o.aerolinea), ag = j.opciones.filter(o => !o.aerolinea), mejor = j.opciones[0];
       let veredicto;
       if (mejor.aerolinea) veredicto = `<b style="color:var(--ok)">✓ El precio más bajo es directo en ${esc(mejor.nombre)}.</b> Cómprale a la aerolínea: sin intermediarios.`;
       else if (aer.length) veredicto = `<b style="color:var(--warn)">${esc(mejor.nombre)} lo vende ${CLP(aer[0].precio - mejor.precio)} más barato que ${esc(aer[0].nombre)}</b> (${CLP((aer[0].precio - mejor.precio) * P)} para ${P}). Es una agencia: si hay cambios o atrasos, respondes con ella y no con la aerolínea.`;
       else veredicto = '<b style="color:var(--warn)">Solo lo venden agencias.</b> Revisa bien sus condiciones antes de pagar.';
-      out.innerHTML = `<div class="vend">${veredicto}
+      return `<div class="vend">${veredicto}
         ${j.opciones.map(o => `<div class="vrow"><span>${esc(o.nombre)}${o.aerolinea ? ' <span class="badge b-green" style="margin:0">aerolínea</span>' : ''}</span><b>${CLP(o.precio)}</b></div>`).join('')}
         ${j.vuelta ? `<div class="gfoot" style="padding:0">Con la vuelta más barata para esta ida: ${esc(j.vuelta.sale)} → ${esc(j.vuelta.llega)}, ${esc(j.vuelta.aerolinea)}.</div>` : ''}
         <div class="gfoot" style="padding:0">Precio por persona según Google, ${ag.length} ${ag.length === 1 ? 'agencia' : 'agencias'} y ${aer.length} ${aer.length === 1 ? 'aerolínea' : 'aerolíneas'}.</div></div>`;
-    } catch (e) { out.innerHTML = '<div class="gfoot">Google no mostró opciones de compra para este vuelo. Intenta con otro.</div>'; btn.hidden = false; }
+  }
+  // Para el vuelo más barato se compara solo, al abrir la búsqueda (reemplaza a Kayak).
+  const VCACHE = {};
+  async function autoVendedores(f, P) {
+    const box = $('autoVend'), v = (f.vuelos || [])[0];
+    if (!box || !v || !v.segs || !v.segs.length) return;
+    const k = [f.ida, f.vuelta, v.segs.map(x => x.join('')).join()].join('|');
+    const pintar = j => { box.innerHTML = `<div class="hero"><span class="k">🏷️ Aerolínea o agencia · el más barato (${esc(v.aerolinea)}, sale ${esc(v.sale)})</span>${htmlVend(j, P)}</div>`; };
+    if (VCACHE[k]) return pintar(VCACHE[k]);
+    box.innerHTML = '<div class="hero">' + cargandoTxt('Comparando el más barato con agencias (Despegar, Falabella, Booking…)…') + '</div>';
+    try {
+      const j = await api({ accion: 'vendedores', origen: ORI().iata, destino: B.destino.iata, ida: f.ida, vuelta: f.vuelta || '', clase: B.clase, segs: JSON.stringify(v.segs) });
+      if (!j.ok) throw new Error(j.error);
+      VCACHE[k] = j;
+      if ($('autoVend') === box) pintar(j);
+    } catch (e) { if ($('autoVend') === box) box.innerHTML = ''; }
+  }
+
+  // ---------- "Ya lo compré": se guarda en Mis viajes y se vigila el precio 24 h
+  async function compre(v, f, P, btn) {
+    const s0 = v.segs[0];
+    if (!confirm(`¿Compraste el vuelo ${s0[3]}${s0[4]} de las ${v.sale} (${CLP(v.precio)} por persona)?\n\nLo guardo en Mis viajes y durante 24 horas reviso cada 2 horas si baja de precio.`)) return;
+    btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      await enviar({ accion: 'agregarViaje', viaje: { numero: s0[3] + s0[4], fecha: s0[2] || f.ida, origen: ORI().iata, destino: B.destino.iata, hora: v.sale,
+        compra: { precio: v.precio, ida: f.ida, vuelta: f.vuelta || '', clase: B.clase, segs: v.segs, personas: P } } });
+      btn.textContent = '✓ Guardado en Destinos → Mis viajes. Te aviso si baja en las próximas 24 h.';
+    } catch (e) { btn.disabled = false; btn.textContent = 'No se pudo guardar. Toca para reintentar.'; }
   }
 
   // 5) tarifa error
@@ -506,44 +539,6 @@
       <tbody>${g.filas.map(f => `<tr><td>${f[0]}</td>${f.slice(1).map(v => `<td class="${v === S || /^Sí|pieza|Gratis|Sin límite/.test(v) ? 'si' : v === N || v === P ? 'no' : ''}">${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>
       <div class="gtxt">${g.nota}<br><span style="color:var(--label3)">Fuente: ${g.fuente}. Confírmalo siempre en la pantalla de tarifas antes de pagar.</span></div></details>`;
   }
-  // ---------- comparación con Kayak (segunda fuente)
-  function tramoKayak(t, titulo) {
-    if (!t) return '';
-    const esc2 = t.escalas.length ? t.escalas.map((x, i) => x + (t.esperas[i] ? ' (' + t.esperas[i].replace('h ', ' h ').replace(/m$/, ' min') + ')' : '')).join(', ') : '';
-    return `<div class="ktramo"><span class="kt">${titulo}</span><b>${esc(t.sale)} → ${esc(t.llega)}${t.masDias ? '<sup>+' + t.masDias + '</sup>' : ''}</b>
-      <span>${esc(t.duracion || '')} · ${t.directo ? 'directo' : esc(t.paradas) + (esc2 ? ': ' + esc(esc2) : '')}</span></div>`;
-  }
-  function comparacionKayak(f, P) {
-    const K = f.kayak;
-    if (!RES.fechas.some(x => x.kayak)) return '';
-    if (!K) return `<div class="gfoot">La comparación con Kayak se hace para la fecha que pediste (${fCorta(RES.ida)}). Toca esa barra para verla.</div>`;
-    if (!K.ok) return `<div class="hero"><span class="k">Comparación con Kayak</span><p>Kayak no respondió esta vez. Puedes revisarlo a mano: <a class="tintlink" href="${esc(K.link)}" target="_blank" rel="noopener noreferrer">abrir Kayak ↗</a></p></div>`;
-    const gmin = f.min || Infinity;
-    const masBaratos = K.vuelos.filter(v => v.precio < gmin * 0.99);
-    if (!masBaratos.length) {
-      return `<div class="hero" style="border-color:rgba(125,240,176,.6)"><span class="k" style="color:var(--ok)">✓ Comparado con Kayak</span><p>Kayak no encontró nada más barato. Su precio más bajo es ${CLP(K.min)} por persona; aquí tienes ${CLP(gmin)}.</p></div>`;
-    }
-    const gmejor = (f.vuelos || [])[0];
-    const gdur = gmejor ? minutos(gmejor.duracion) : 0;
-    const tarjetas = masBaratos.slice(0, 3).map(v => {
-      const dur = minutos(v.ida.duracion || '') + (v.vuelta ? minutos(v.vuelta.duracion || '') : 0);
-      const ex = extras({ escalas: [...v.ida.escalas, ...(v.vuelta ? v.vuelta.escalas : [])], directo: v.ida.directo && (!v.vuelta || v.vuelta.directo), escalaTexto: [...v.ida.esperas, ...(v.vuelta ? v.vuelta.esperas : [])].join(' '), cambioAeropuerto: v.ida.cambioAeropuerto || (v.vuelta && v.vuelta.cambioAeropuerto) }, B.destino.cc);
-      const masHoras = gdur && v.ida.duracion ? Math.round((minutos(v.ida.duracion) - gdur) / 60) : 0;
-      return `<div class="kcard">
-        <div class="top"><b>${esc(v.aerolinea)}</b><span class="aer">${esc(v.tarifa || '')}</span></div>
-        ${tramoKayak(v.ida, 'Ida')}${tramoKayak(v.vuelta, 'Vuelta')}
-        ${masHoras >= 2 ? `<div class="extra ojo"><span>⏱</span><span>La ida dura ${masHoras} h más que la opción más barata de Google.</span></div>` : ''}
-        ${ex.filter(x => x[0] !== 'ok').map(([k, t]) => `<div class="extra ojo"><span>⚠</span><span>${esc(t)}</span></div>`).join('')}
-        <div class="vprecio"><span class="pp">${CLP(v.precio)} por persona<br>${CLP(gmin - v.precio)} menos que aquí</span><span class="tot"><b>${CLP(v.precio * P)}</b><span>total ${P} ${P === 1 ? 'persona' : 'personas'}</span></span></div>
-      </div>`;
-    }).join('');
-    return `<div class="hero" style="border-color:rgba(255,210,122,.65)"><span class="k" style="color:var(--warn)">Kayak encontró más barato</span>
-      <p>Hasta <b>${CLP(gmin - masBaratos[0].precio)} menos por persona</b>. Antes de decidir, mira lo que cambia: más escalas u horas, y el precio puede venir de una agencia (con cargos o cambios más difíciles).</p></div>
-      ${tarjetas}
-      <a class="btn plain" href="${esc(K.link)}" target="_blank" rel="noopener noreferrer">Ver estas opciones en Kayak ↗</a>
-      <div class="gfoot">En Kayak, antes de pagar, elige si puedes la opción que dice el nombre de la aerolínea (venta directa) y no una agencia.</div>`;
-  }
-  // ---------- agencias: botones con la búsqueda ya rellenada (bloquean la lectura automática)
   function agencias(f) {
     const o = ORI().iata, d = B.destino.iata, ida = f.ida, vta = f.vuelta, A = B.a, N = B.n, BB = B.b;
     const plataforma = dom => vta ? `https://www.${dom}/shop/flights/results/roundtrip/${o}/${d}/${ida}/${vta}/${A}/${N}/${BB}`
@@ -692,15 +687,30 @@
     $('exMes').innerHTML = html; if (!$('exMes').value) $('exMes').selectedIndex = 1;
   }
   $('exRegion').querySelectorAll('button').forEach(x => x.onclick = () => { EX_REGION = x.dataset.r; $('exRegion').querySelectorAll('button').forEach(y => y.setAttribute('aria-pressed', y === x)); });
-  $('bsExplorarBtn').onclick = () => { prepararExplorar(); ver('explorar'); };
-  $('exBuscar').onclick = async () => {
-    if (!conf.url || !conf.key) { $('gearBtn').click(); return; }
-    const [y, m] = $('exMes').value.split('-').map(Number), noches = +$('exNoches').value, presu = +$('exPresu').value || 0;
+  $('bsExplorarBtn').onclick = () => { prepararExplorar(); pintarFeriados(); ver('explorar'); };
+  // Fines de semana largos (feriados oficiales de Chile, api.boostr.cl): primer y último día libre.
+  const FERIADOS = [
+    ['Inmaculada Concepción', '2026-12-05', '2026-12-08', 'pidiendo el lunes 7'], ['Navidad', '2026-12-25', '2026-12-27'], ['Año Nuevo', '2027-01-01', '2027-01-03'],
+    ['Semana Santa', '2027-03-26', '2027-03-28'], ['Glorias Navales', '2027-05-21', '2027-05-23'], ['Pueblos Indígenas', '2027-06-19', '2027-06-21'],
+    ['San Pedro y San Pablo', '2027-06-26', '2027-06-28'], ['Virgen del Carmen', '2027-07-16', '2027-07-18'], ['Fiestas Patrias', '2027-09-17', '2027-09-19'],
+    ['Encuentro de Dos Mundos', '2027-10-09', '2027-10-11'], ['Todos los Santos', '2027-10-30', '2027-11-01']
+  ];
+  function pintarFeriados() {
+    const lim = iso(new Date(D(hoyIso()).getTime() + 3 * 864e5));
+    $('exFeriados').innerHTML = FERIADOS.filter(x => x[1] > lim).map(x => `<button type="button" data-fe="${x[1]}_${x[2]}"><b>${esc(x[0])}</b> · ${fCorta(x[1])} → ${fCorta(x[2])}${x[3] ? ' (' + esc(x[3]) + ')' : ''}</button>`).join('');
+    $('exFeriados').querySelectorAll('[data-fe]').forEach(x => x.onclick = () => { const [i, v] = x.dataset.fe.split('_'); explorarFechas(i, v); });
+  }
+  $('exBuscar').onclick = () => {
+    const [y, m] = $('exMes').value.split('-').map(Number), noches = +$('exNoches').value;
     // fecha: el primer martes del mes que esté a 14 días o más
     let d = new Date(Date.UTC(y, m - 1, 1, 12)); const min = new Date(D(hoyIso()).getTime() + 14 * 864e5);
     if (d < min) d = min;
     while (d.getUTCDay() !== 2) d = new Date(d.getTime() + 864e5);
-    const ida = iso(d), vuelta = noches ? iso(new Date(d.getTime() + noches * 864e5)) : '';
+    explorarFechas(iso(d), noches ? iso(new Date(d.getTime() + noches * 864e5)) : '');
+  };
+  async function explorarFechas(ida, vuelta) {
+    if (!conf.url || !conf.key) { $('gearBtn').click(); return; }
+    const presu = +$('exPresu').value || 0;
     const lista = DESTINOS.filter(x => (EX_REGION === 'todos' || x[2] === EX_REGION) && x[0] !== ORI().iata);
     const P = B.a + B.n;
     $('exRes').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#ffc98b" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Revisando ${lista.length} destinos…</b><span class="gfoot">Salida ${fCorta(ida)}${vuelta ? ', vuelta ' + fCorta(vuelta) : ', solo ida'}. Unos 15 segundos.</span></div>`;
@@ -728,7 +738,7 @@
       const i = info[x.dataset.ex], cc = PAIS_DE[i[0]] || '';
       window.vuelosIrABuscar({ origen: ORI(), destino: { iata: i[0], ciudad: i[1], pais: cc ? nomPais(cc) : i[2], cc }, ida, vuelta, modo: vuelta ? 'rt' : 'ow', a: B.a, n: B.n, b: B.b, clase: B.clase });
     });
-  };
+  }
 
   // ---------- 2) dos pasajes solo ida
   function dosIdasCard(f, P) {
@@ -757,6 +767,25 @@
   $('bsMaleta').querySelectorAll('button').forEach(x => x.onclick = () => { B.maleta = x.dataset.m; guardar(); $('bsMaleta').querySelectorAll('button').forEach(y => y.setAttribute('aria-pressed', y === x)); pintarHome(); });
   $('bsMaleta').querySelectorAll('button').forEach(y => y.setAttribute('aria-pressed', y.dataset.m === B.maleta));
 
+  // ---------- presupuesto "a cualquier parte"
+  window.vuelosPresupuesto = p => {
+    if (p && p.max) {
+      $('prMax').value = p.max; $('prReg').value = p.region || 'todos'; $('prQuitar').hidden = false;
+      $('prMsg').innerHTML = `<b style="color:var(--ok)">Activo:</b> te aviso si cualquier destino${p.region && p.region !== 'todos' ? ' de ' + esc(p.region) : ''} queda bajo ${CLP(p.max)} por persona.`;
+    } else {
+      $('prQuitar').hidden = true;
+      $('prMsg').textContent = 'Reviso 27 destinos populares dos veces al día, cada vez en otra fecha (de 3 semanas a 6 meses), ida y vuelta 7 noches. Si alguno queda bajo tu máximo, te aviso al celular.';
+    }
+  };
+  try { window.vuelosPresupuesto((JSON.parse(localStorage.getItem('datos') || '{}') || {}).presupuesto || null); } catch (e) { window.vuelosPresupuesto(null); }
+  $('presuForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const max = +$('prMax').value; if (!max) return;
+    $('prMsg').textContent = 'Guardando…';
+    try { await enviar({ accion: 'presupuesto', max, region: $('prReg').value }); } catch (err) { $('prMsg').textContent = 'No se pudo guardar.'; }
+  });
+  $('prQuitar').onclick = async () => { try { await enviar({ accion: 'presupuesto', max: 0 }); $('prMax').value = ''; } catch (err) {} };
+
   // ---------- 5) Mis viajes
   let VIAJES = [];
   window.vuelosViajes = l => { VIAJES = l || []; pintarViajes(); };
@@ -772,6 +801,8 @@
         <div class="top"><b>${esc(x.numero)} · ${esc(x.origen || '')} → ${esc(x.destino || '')}</b><span class="aer">${fCorta(x.fecha)}${x.hora ? ' · ' + esc(x.hora) : ''}</span></div>
         <div><b style="font-size:20px">${dias === 0 ? '¡Hoy!' : dias === 1 ? 'Mañana' : 'En ' + dias + ' días'}</b>${dias <= 2 ? ' <span class="badge b-orange">check-in abierto o por abrir</span>' : ''}</div>
         ${docs.map(t => `<div class="extra ojo"><span>📄</span><span>${esc(t)}</span></div>`).join('')}
+        ${x.compra && Date.parse(x.compra.hasta) > Date.now() ? `<div class="extra ok"><span>👀</span><span>Vigilo el precio hasta las ${new Date(x.compra.hasta).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' })} del ${fCorta(new Date(x.compra.hasta).toISOString().slice(0, 10))}. Pagaste ${CLP(x.compra.precio)} por persona${x.compra.ultimo ? ', hoy está en ' + CLP(x.compra.ultimo) : ''}. En vuelos desde o hacia EE.UU. puedes anular gratis dentro de 24 h (si compraste con 7 días o más de anticipación); en otras rutas depende de la aerolínea.</span></div>` : ''}
+        <div class="extra" style="color:var(--label2)"><span>🔔</span><span>El día del vuelo reviso su estado cada 30 minutos y te aviso si se atrasa, cambia de puerta o se cancela.</span></div>
         <div class="extra" style="color:var(--label2)"><span>🛂</span><span>Pasaporte o carnet vigente. El check-in online suele abrir 24 a 48 horas antes en la app de la aerolínea.</span></div>
         <div id="est-${esc(x.id)}" class="gfoot" style="padding:0"></div>
         <div style="display:flex;gap:18px"><button type="button" class="tintlink" data-est="${esc(x.id)}">Ver estado del vuelo</button><button type="button" class="tintlink" style="color:var(--bad)" data-qv="${esc(x.id)}">Quitar</button></div>
@@ -791,7 +822,7 @@
     e.preventDefault();
     const viaje = { numero: $('vjNum').value, fecha: $('vjFecha').value, origen: $('vjOri').value, destino: $('vjDes').value, hora: $('vjHora').value };
     $('vjMsg').textContent = 'Guardando…';
-    try { await enviar({ accion: 'agregarViaje', viaje }); $('vjMsg').textContent = 'Guardado. Te aviso 2 días antes y el día del vuelo.'; $('vjForm').reset(); }
+    try { await enviar({ accion: 'agregarViaje', viaje }); $('vjMsg').textContent = 'Guardado. Te aviso 2 días antes y, el día del vuelo, si se atrasa, cambia de puerta o se cancela.'; $('vjForm').reset(); }
     catch (err) { $('vjMsg').textContent = err.message === 'parametros' ? 'Revisa el número de vuelo (ej. LA500) y la fecha.' : 'No se pudo guardar.'; }
   });
   if (!AEROS) fetch('aeropuertos.json?v=1').then(r => r.json()).then(j => { AEROS = AEROS || j; Object.keys(AEROS).forEach(cc => AEROS[cc].forEach(z => PAIS_DE[z[0]] = cc)); pintarViajes(); }).catch(() => {});
@@ -811,7 +842,7 @@
       ${ex.map(([k, t]) => `<div class="extra ${k === 'ok' ? 'ok' : 'ojo'}"><span>${k === 'ok' ? '✓' : k === 'info' ? 'ℹ' : '⚠'}</span><span>${esc(t)}</span></div>`).join('')}
       <div class="vprecio"><span class="pp">${CLP(v.precio)} por persona<br>tasas incluidas · equipaje según tarifa</span><span class="tot"><b>${CLP(v.precio * P)}</b><span>total ${P} ${P === 1 ? 'persona' : 'personas'}</span></span></div>
       ${guiaTarifa(v.aerolinea, B.destino.cc)}
-      ${v.segs && v.segs.length ? `<button type="button" class="tintlink" style="text-align:left" data-vend="${idx}">🏷️ ¿Quién lo vende más barato? Aerolínea o agencias</button><div data-vend-out="${idx}"></div>` : ''}
+      ${v.segs && v.segs.length ? `<button type="button" class="tintlink" style="text-align:left" data-vend="${idx}">🏷️ ¿Quién lo vende más barato? Aerolínea o agencias</button><div data-vend-out="${idx}"></div><button type="button" class="tintlink" style="text-align:left;color:var(--ok)" data-compre="${idx}">✅ Ya lo compré: guardarlo y vigilar el precio 24 h</button>` : ''}
       ${(o => o ? `<a class="btn plain" style="padding:11px;font-size:15px" href="${o.url}" target="_blank" rel="noopener noreferrer">Comprar directo en ${esc(o.nombre)} ↗</a>` : '')(oficial(v.aerolinea))}
     </div>`;
   }

@@ -342,3 +342,4 @@ details.guia td.no{color:var(--warn)}
 .grilla td button.gact{outline:2px solid var(--tint)}
 .spin{display:inline-block;animation:vuela 1.2s ease-in-out infinite}
 @keyframes vuela{50%{transform:translateX(6px)}}
+#exFeriados button{height:auto;min-height:38px;padding:8px 12px;white-space:normal;text-align:left;font-weight:600}

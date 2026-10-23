@@ -11,7 +11,7 @@
 <title>Vuelos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="styles.css?v=25">
+<link rel="stylesheet" href="styles.css?v=26">
 </head>
 <body>
 <div class="luces" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -46,7 +46,7 @@
   <section class="view" id="v-buscar">
     <!-- inicio del buscador -->
     <div class="view" id="bs-home">
-      <div><h1 class="large">¿A dónde vamos?</h1><p class="sub">Precios de Google Flights y Kayak, con tasas incluidas.</p></div>
+      <div><h1 class="large">¿A dónde vamos?</h1><p class="sub">Precios de Google Flights con tasas incluidas, comparados con agencias.</p></div>
       <div class="bs-card glass">
         <div class="seg dos" id="bsModo" role="group" aria-label="Tipo de viaje">
           <button type="button" data-m="rt" aria-pressed="true">Ida y vuelta</button>
@@ -94,6 +94,9 @@
         <button type="button" data-r="Europa" aria-pressed="false">Europa</button><button type="button" data-r="Oceanía" aria-pressed="false">Oceanía</button>
       </div>
       <button type="button" class="btn" id="exBuscar">🌎 Explorar</button>
+      <details class="glass" style="border-radius:20px;padding:4px 0"><summary style="padding:10px 16px;font-weight:800;cursor:pointer">🇨🇱 O elige un fin de semana largo</summary>
+        <div class="gfoot" style="padding:0 16px">Feriados de Chile. Con un día de vacaciones antes o después, el viaje rinde más.</div>
+        <div class="chips" id="exFeriados" style="flex-wrap:wrap;padding:8px 12px 12px"></div></details>
       <div class="view" id="exRes" style="gap:10px"></div>
     </div>
 
@@ -197,10 +200,19 @@
             <div class="field"><label for="vjDes">Hacia</label><input id="vjDes" placeholder="MIA" maxlength="3" autocapitalize="characters"></div>
             <div class="field"><label for="vjHora">Hora de salida</label><input id="vjHora" type="time"></div>
           </div>
-          <button class="btn" type="submit">Guardar vuelo</button><div class="gfoot" id="vjMsg">Te aviso 2 días antes para el check-in y el día del vuelo con su estado.</div>
+          <button class="btn" type="submit">Guardar vuelo</button><div class="gfoot" id="vjMsg">Te aviso 2 días antes para el check-in y, el día del vuelo, si se atrasa, cambia de puerta o se cancela. Si lo buscaste en la app, es más fácil el botón "✅ Ya lo compré" del vuelo.</div>
         </form></details></div>
     <div class="group"><div class="ghead">🔔 Búsquedas que sigo</div><div class="view" id="seguidos" style="gap:10px"></div>
       <div class="gfoot">Se revisan solas a las 8:00 y a las 20:00, aunque tu PC esté apagado. Si el precio baja 5% o más, te llega una notificación al celular.</div></div>
+    <form class="group" id="presuForm">
+      <div class="ghead">💰 Avísame a cualquier parte</div>
+      <div class="list">
+        <div class="field"><label for="prMax">Máx. por persona</label><input id="prMax" type="number" inputmode="numeric" placeholder="300000"></div>
+        <div class="field"><label for="prReg">Región</label><select id="prReg"><option value="todos">Cualquiera</option><option>Chile</option><option>Sudamérica</option><option>Norteamérica</option><option value="Caribe">Caribe y Centroamérica</option><option>Europa</option><option>Oceanía</option></select></div>
+      </div>
+      <div class="gfoot" id="prMsg"></div>
+      <div style="display:flex;gap:8px"><button class="btn" type="submit">Guardar</button><button class="btn plain" type="button" id="prQuitar" hidden>Quitar</button></div>
+    </form>
     <form class="group" id="addf">
       <div class="ghead">Agregar destino</div>
       <div class="list">
@@ -274,10 +286,10 @@
   <button type="button" data-v="promos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>Promos</button>
 </div></nav>
 
-<script src="config.js?v=25"></script>
-<script src="app.js?v=25"></script>
-<script src="buscar.js?v=25"></script>
-<script src="asistente.js?v=25"></script>
+<script src="config.js?v=26"></script>
+<script src="app.js?v=26"></script>
+<script src="buscar.js?v=26"></script>
+<script src="asistente.js?v=26"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
 </script>

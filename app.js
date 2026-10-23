@@ -169,7 +169,7 @@ const conf={
 function aplicar(datos,desdeCache){
   OFERTAS=(datos.ofertas||[]).map(o=>({...o,id:o.id||((o.aerolinea||'x').toLowerCase().slice(0,3)+'-'+o.iata)}));
   MIS=(datos.seguimiento||[]).map(m=>({...m,id:m.iata}));
-  TARIFAS=datos.tarifas||{};ALERTAS=datos.alertas||[];if(window.vuelosSeguidos)window.vuelosSeguidos(datos.seguidos||[]);if(window.vuelosViajes)window.vuelosViajes(datos.viajes||[]);REFRESCADO=datos.refrescado||(datos.estado&&datos.estado.actualizado)||null;drawAlertas();
+  TARIFAS=datos.tarifas||{};ALERTAS=datos.alertas||[];if(window.vuelosSeguidos)window.vuelosSeguidos(datos.seguidos||[]);if(window.vuelosViajes)window.vuelosViajes(datos.viajes||[]);if(window.vuelosPresupuesto)window.vuelosPresupuesto(datos.presupuesto||null);REFRESCADO=datos.refrescado||(datos.estado&&datos.estado.actualizado)||null;drawAlertas();
   drawEstado(datos.estado||null);redraw();drawStamp();
   if(desdeCache)$('stamp').textContent='Sin conexión · '+hace(REFRESCADO);
 }
