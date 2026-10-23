@@ -52,8 +52,8 @@
     $('bsPersonasTxt').textContent = txtPersonas();
     ['bsModo', 'bsModo2'].forEach(id => $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.m === B.modo)));
     const listo = B.destino && B.ida && (B.modo === 'ow' || B.vuelta);
-    $('bsBuscar').disabled = !listo;
-    $('bsMsg').textContent = listo ? '' : 'Completa destino y fechas para buscar.';
+    $('bsBuscar').disabled = false;
+    $('bsMsg').textContent = listo ? '' : (!B.destino ? 'Falta elegir el destino.' : 'Faltan las fechas: toca Buscar y te abro el calendario.');
     pintarRecientes();
   }
   function cambiarModo(m) { B.modo = m; if (m === 'ow') B.vuelta = null; guardar(); pintarHome(); pintarMeses(); }
@@ -63,7 +63,12 @@
   $('bsInvertir').onclick = () => { if (!B.destino) return; const o = ORI(); B.origen = B.destino; B.destino = o; guardar(); pintarHome(); };
   $('bsFechas').onclick = () => { ver('fechas'); pintarMeses(); };
   $('bsPersonas').onclick = () => { ver('personas'); pintarPersonas(); };
-  $('bsBuscar').onclick = () => buscar();
+  // Si falta algo, el botón lleva directo a completarlo (antes quedaba apagado y parecía que no hacía nada).
+  $('bsBuscar').onclick = () => {
+    if (!B.destino) { $('bsDestino').click(); return; }
+    if (!B.ida || (B.modo === 'rt' && !B.vuelta)) { $('bsFechas').click(); return; }
+    buscar();
+  };
 
   // ---------- recientes
   function recientes() { try { return JSON.parse(localStorage.getItem('recientes') || '[]'); } catch (e) { return []; } }
