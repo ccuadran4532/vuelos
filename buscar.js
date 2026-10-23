@@ -288,6 +288,7 @@
         <div class="barras" id="bsBarras">${barras}</div>
         <div class="gfoot" style="padding:8px 10px 2px">Verde = más barato. ${RES.vuelta ? `La vuelta es siempre ${noches()} noches después.` : ''} ${RES.desdeMemoria ? 'Búsqueda de hace menos de 30 min (no se repitió).' : ''}</div>
       </div>
+      ${consejo(f)}
       ${comparacionKayak(f, P)}
       ${f.aviso ? `<div class="hero" style="border-color:rgba(125,240,176,.6)"><p>📈 <b>Google Flights:</b> ${esc(f.aviso.replace(/CLP\s?([\d,]+)/, (m, n) => CLP(+n.replace(/,/g, ''))))}</p></div>` : ''}
       ${notasDestino(B.destino.cc).map(t => `<div class="hero" style="border-color:rgba(255,210,122,.6)"><span class="k" style="color:var(--warn)">Costo aparte del destino</span><p>${esc(t)}</p></div>`).join('')}
@@ -302,6 +303,7 @@
       ${f.link ? `<a class="btn plain" href="${esc(f.link)}" target="_blank" rel="noopener noreferrer">Ver en Google Flights</a>` : ''}
       ${agencias(f)}
       <div class="gfoot">Precios de Google Flights para 1 adulto multiplicados por ${P}, con tasas de embarque e impuestos obligatorios. Google muestra el precio más bajo publicado; a veces viene de una agencia. Por eso el botón te lleva siempre al <b>sitio oficial de la aerolínea</b>, sin intermediarios ni comisiones: ahí confirmas el precio final antes de pagar. En Google Flights, elige siempre la opción "Reservar con la aerolínea".</div>`;
+    if ($('bsSeguir')) $('bsSeguir').onclick = () => seguir(f);
     $('bsBarras').querySelectorAll('[data-i]').forEach(b => b.onclick = () => { SEL = +b.dataset.i; pintarRes(); });
     $('bsResCuerpo').querySelectorAll('[data-millas]').forEach(inp => inp.addEventListener('input', () => {
       const m = +inp.value, precio = +inp.dataset.precio;
@@ -438,6 +440,57 @@
     return `<div class="group"><div class="ghead">Revisar también en agencias</div>
       <div class="agencias">${L.map(([n, u, t]) => `<a class="ag glass" href="${esc(u)}" target="_blank" rel="noopener noreferrer"><b>${n} ↗</b><small>${t}</small></a>`).join('')}</div>
       <div class="gfoot">Las agencias cobran cargo de gestión y bloquean la lectura automática, por eso se abren aparte. Compara su <b>total final</b> (con cargos) contra el de la aerolínea antes de pagar.</div></div>`;
+  }
+  // ---------- seguir precios y "¿compro o espero?"
+  let SEGUIDOS = [];
+  const idSeg = (f) => [ORI().iata, B.destino.iata, f.ida, f.vuelta || '', B.clase].join('_');
+  function consejo(f) {
+    const seg = SEGUIDOS.find(x => x.id === idSeg(f));
+    const dias = Math.round((D(f.ida) - D(hoyIso())) / 864e5);
+    let nivel, titulo, razon;
+    if (seg && seg.recomendacion) ({ nivel, titulo, razon } = seg.recomendacion);
+    else if (/bajos/i.test(f.aviso || '')) { nivel = 'comprar'; titulo = 'Buen momento para comprar'; razon = 'Google dice que el precio está más bajo de lo habitual para esta ruta.'; }
+    else if (dias <= 21) { nivel = 'comprar'; titulo = 'Compra pronto'; razon = `Faltan ${dias} días: a esta altura los precios casi siempre suben.`; }
+    else if (/altos/i.test(f.aviso || '')) { nivel = 'esperar'; titulo = 'Puedes esperar'; razon = 'Google dice que el precio está más alto de lo habitual. Síguelo y te aviso si baja.'; }
+    else { nivel = 'esperar'; titulo = 'Precio normal'; razon = `Faltan ${dias} días. Síguelo y te aviso si baja; con unos días de historial te digo si conviene esperar.`; }
+    const hist = seg && seg.hist && seg.hist.length > 1 ? `<div class="gfoot" style="padding:0">Historial: ${seg.hist.slice(-6).map(e => fCorta(e.f) + ' ' + CLP(e.p)).join(' · ')}</div>` : '';
+    return `<div class="hero consejo ${nivel}"><span class="k">${nivel === 'comprar' ? '🟢' : '🟡'} ¿Compro ahora o espero?</span><p><b>${esc(titulo)}.</b> ${esc(razon)}</p>${hist}
+      ${seg ? `<div class="gfoot" style="padding:0">🔔 Siguiendo este precio (se revisa a las 8:00 y 20:00).</div>` : `<button type="button" class="btn plain" id="bsSeguir" style="padding:11px;font-size:15px">🔔 Seguir este precio</button>`}</div>`;
+  }
+  async function seguir(f) {
+    const btn = $('bsSeguir'); if (btn) { btn.disabled = true; btn.textContent = 'Guardando…'; }
+    try {
+      await enviar({ accion: 'seguir', busqueda: { origen: ORI().iata, destino: B.destino.iata, ciudad: B.destino.ciudad, ida: f.ida, vuelta: f.vuelta || '', a: B.a, n: B.n, b: B.b, clase: B.clase,
+        precio: f.min, aerolinea: (f.vuelos && f.vuelos[0] && f.vuelos[0].aerolinea) || '', aviso: f.aviso || '' } });
+      pintarRes();
+    } catch (e) { if (btn) { btn.disabled = false; btn.textContent = 'No se pudo guardar. Reintentar'; } }
+  }
+  window.vuelosSeguidos = lista => { SEGUIDOS = lista || []; pintarSeguidos(); };
+  function pintarSeguidos() {
+    const cont = $('seguidos'); if (!cont) return;
+    const hoy = hoyIso();
+    const L = SEGUIDOS.filter(x => x.ida >= hoy);
+    if (!L.length) { cont.innerHTML = '<div class="empty glass" style="border-radius:20px">Aún no sigues ninguna búsqueda. Busca un vuelo y toca <b>🔔 Seguir este precio</b>.</div>'; return; }
+    cont.innerHTML = L.map(x => {
+      const h = x.hist || [], ult = h[h.length - 1], prev = h[h.length - 2];
+      const P = (x.a || 1) + (x.n || 0);
+      const tend = !prev ? '' : ult.p < prev.p ? `<span class="badge b-green">▼ ${CLP(prev.p - ult.p)}</span>` : ult.p > prev.p ? `<span class="badge b-red">▲ ${CLP(ult.p - prev.p)}</span>` : '<span class="badge b-blue">= igual</span>';
+      const r = x.recomendacion || { nivel: 'esperar', titulo: 'Siguiendo el precio', razon: '' };
+      const vals = h.map(e => e.p), mn = Math.min(...vals), mx = Math.max(...vals);
+      const spark = h.length > 1 ? `<svg class="spark" viewBox="0 0 80 22" aria-hidden="true" style="width:80px;height:22px"><polyline fill="none" stroke="var(--tint)" stroke-width="2" points="${h.map((e, i) => (i / (h.length - 1) * 76 + 2).toFixed(1) + ',' + (19 - (e.p - mn) / ((mx - mn) || 1) * 16).toFixed(1)).join(' ')}"/></svg>` : '';
+      return `<div class="glass segcard">
+        <div class="top"><b>${esc(x.origen)} → ${esc(x.destino)} · ${esc(x.ciudad || '')}</b><span class="aer">${fCorta(x.ida)}${x.vuelta ? ' → ' + fCorta(x.vuelta) : ''}</span></div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:8px"><span><b style="font-size:22px">${ult ? CLP(ult.p) : '—'}</b> <span class="gfoot" style="padding:0">por persona</span><br>${tend}${ult ? `<span class="gfoot" style="padding:0"> total ${P}: ${CLP(ult.p * P)}</span>` : ''}</span>${spark}</div>
+        <div class="consejo ${r.nivel}" style="font-size:13.5px"><b>${r.nivel === 'comprar' ? '🟢' : '🟡'} ${esc(r.titulo)}.</b> ${esc(r.razon || '')}</div>
+        <div style="display:flex;gap:18px"><button type="button" class="tintlink" data-ver="${esc(x.id)}">Ver vuelos y comprar</button><button type="button" class="tintlink" style="color:var(--bad)" data-dejar="${esc(x.id)}">Dejar de seguir</button></div>
+      </div>`;
+    }).join('');
+    cont.querySelectorAll('[data-ver]').forEach(btn => btn.onclick = () => {
+      const x = SEGUIDOS.find(s => s.id === btn.dataset.ver); if (!x) return;
+      const lug = iata => { const cc = PAIS_DE[iata]; const a = cc && AEROS ? (AEROS[cc] || []).find(z => z[0] === iata) : null; return { iata, ciudad: a ? a[1] : (iata === x.destino ? x.ciudad : iata), pais: cc ? nomPais(cc) : '', cc: cc || '' }; };
+      window.vuelosIrABuscar({ origen: lug(x.origen), destino: lug(x.destino), ida: x.ida, vuelta: x.vuelta, modo: x.vuelta ? 'rt' : 'ow', a: x.a, n: x.n, b: x.b, clase: x.clase });
+    });
+    cont.querySelectorAll('[data-dejar]').forEach(btn => btn.onclick = async () => { btn.disabled = true; try { await enviar({ accion: 'dejarSeguir', id: btn.dataset.dejar }); } catch (e) { btn.disabled = false; } });
   }
   function minutos(s) { const h = (s.match(/(\d+) h/) || [])[1] || 0, m = (s.match(/(\d+) min/) || [])[1] || 0; return h * 60 + +m; }
   function tarjeta(v, mejor, rapido, P) {

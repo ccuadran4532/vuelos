@@ -169,7 +169,7 @@ const conf={
 function aplicar(datos,desdeCache){
   OFERTAS=(datos.ofertas||[]).map(o=>({...o,id:o.id||((o.aerolinea||'x').toLowerCase().slice(0,3)+'-'+o.iata)}));
   MIS=(datos.seguimiento||[]).map(m=>({...m,id:m.iata}));
-  TARIFAS=datos.tarifas||{};ALERTAS=datos.alertas||[];REFRESCADO=datos.refrescado||(datos.estado&&datos.estado.actualizado)||null;drawAlertas();
+  TARIFAS=datos.tarifas||{};ALERTAS=datos.alertas||[];if(window.vuelosSeguidos)window.vuelosSeguidos(datos.seguidos||[]);REFRESCADO=datos.refrescado||(datos.estado&&datos.estado.actualizado)||null;drawAlertas();
   drawEstado(datos.estado||null);redraw();drawStamp();
   if(desdeCache)$('stamp').textContent='Sin conexión · '+hace(REFRESCADO);
 }
@@ -180,6 +180,7 @@ async function cargar(){
     const j=await r.json();
     if(!j.ok){$('stamp').textContent='Clave incorrecta';$('resumen').textContent='El servidor rechazó la clave. Revísala en Ajustes (⚙︎).';return}
     try{localStorage.setItem('datos',JSON.stringify(j.datos))}catch(e){}
+    if(j.ntfy){try{localStorage.setItem('ntfy',j.ntfy)}catch(e){}$('ntfyTema').textContent=j.ntfy}
     aplicar(j.datos,false);
     // Pide al servidor que traiga los precios de este momento (tarda unos segundos).
     ACTUALIZANDO=true;drawStamp();
@@ -219,3 +220,10 @@ drawMis();
 try{const c=JSON.parse(localStorage.getItem('datos')||'null');if(c)aplicar(c,false)}catch(e){}
 cargar();
 document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')cargar()});
+
+// ---------- notificaciones (ntfy)
+try{const t=localStorage.getItem('ntfy');if(t)$('ntfyTema').textContent=t}catch(e){}
+$('ntfyCopiar').onclick=async()=>{const t=$('ntfyTema').textContent;try{await navigator.clipboard.writeText(t);$('ntfyCopiar').textContent='Copiado'}catch(e){$('ntfyCopiar').textContent='Mantén presionado el tema para copiarlo'}setTimeout(()=>$('ntfyCopiar').textContent='Copiar',1800)};
+$('ntfyProbar').onclick=async()=>{$('ntfyMsg').textContent='Enviando…';try{const j=await (await fetch(conf.url+(conf.url.includes('?')?'&':'?')+'clave='+encodeURIComponent(conf.key)+'&accion=probarAviso')).json();
+  if(j.tema){$('ntfyTema').textContent=j.tema;try{localStorage.setItem('ntfy',j.tema)}catch(e){}}
+  $('ntfyMsg').innerHTML=j.ok?'<span class="ok">Enviada. Si te suscribiste en ntfy, ya debería aparecer en tu celular.</span>':'<span class="err">No se pudo enviar. Inténtalo de nuevo.</span>'}catch(e){$('ntfyMsg').innerHTML='<span class="err">Sin conexión con el servidor.</span>'}};

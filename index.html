@@ -11,7 +11,7 @@
 <title>Vuelos</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap">
-<link rel="stylesheet" href="styles.css?v=21">
+<link rel="stylesheet" href="styles.css?v=22">
 </head>
 <body>
 <div class="luces" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -162,7 +162,9 @@
 
   <!-- DESTINOS -->
   <section class="view" id="v-mis" hidden>
-    <div><h1 class="large">Destinos</h1><p class="sub">Te avisa cuando una oferta baja de tu precio máximo.</p></div>
+    <div><h1 class="large">Destinos</h1><p class="sub">Tus búsquedas seguidas y tus destinos con precio máximo.</p></div>
+    <div class="group"><div class="ghead">🔔 Búsquedas que sigo</div><div class="view" id="seguidos" style="gap:10px"></div>
+      <div class="gfoot">Se revisan solas a las 8:00 y a las 20:00, aunque tu PC esté apagado. Si el precio baja 5% o más, te llega una notificación al celular.</div></div>
     <form class="group" id="addf">
       <div class="ghead">Agregar destino</div>
       <div class="list">
@@ -203,6 +205,18 @@
       <div class="gfoot" id="cfgMsg">La clave está en tu PC, en el archivo Vuelos-App\privado\CLAVE.txt.</div>
       <button class="btn" type="submit">Guardar y probar</button>
     </form>
+    <div class="group">
+      <div class="ghead">Notificaciones en el celular</div>
+      <div class="list"><div class="note">
+        <ol style="margin:0;padding-left:20px;display:grid;gap:6px">
+          <li>Instala la app gratuita <b>ntfy</b> desde Play Store.</li>
+          <li>Ábrela, toca <b>+</b> y escribe este tema: <b class="mono" id="ntfyTema" style="color:var(--tint)">(conéctate primero)</b> <button type="button" class="tintlink" id="ntfyCopiar">Copiar</button></li>
+          <li>Toca <b>Suscribirse</b>. Listo.</li>
+        </ol>
+      </div></div>
+      <button type="button" class="btn plain" id="ntfyProbar">Enviar notificación de prueba</button>
+      <div class="gfoot" id="ntfyMsg">El tema es secreto: solo quien lo tenga recibe tus avisos.</div>
+    </div>
   </section>
 
   <!-- DETALLE -->
@@ -224,10 +238,10 @@
   <button type="button" data-v="promos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>Promos</button>
 </div></nav>
 
-<script src="config.js?v=21"></script>
-<script src="app.js?v=21"></script>
-<script src="buscar.js?v=21"></script>
-<script src="asistente.js?v=21"></script>
+<script src="config.js?v=22"></script>
+<script src="app.js?v=22"></script>
+<script src="buscar.js?v=22"></script>
+<script src="asistente.js?v=22"></script>
 <script>
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(function () {});
 </script>
