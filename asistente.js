@@ -160,7 +160,7 @@
     }
   }
   async function buscarMes(r) {
-    if (!conf.url || !conf.key) { bot('Primero configura la conexión en Ajustes (⚙︎).'); return; }
+    if (!conf.url || !conf.key) { bot('Falta tu clave. Te abro Ajustes: escríbela una vez y toca Guardar y probar.'); setTimeout(() => $('gearBtn').click(), 900); return; }
     const k = 'r' + Date.now();
     const trozos = [];
     for (let i = 0; i < r.dias; i += 8) trozos.push({ desde: sumar(r.desde, i), dias: Math.min(8, r.dias - i) });

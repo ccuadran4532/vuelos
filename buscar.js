@@ -238,7 +238,7 @@
 
   // ---------- búsqueda y resultados
   async function buscar() {
-    if (!conf.url || !conf.key) { $('bsMsg').textContent = 'Primero configura la conexión en Ajustes (⚙︎).'; return; }
+    if (!conf.url || !conf.key) { $('gearBtn').click(); $('cfgMsg').innerHTML = '<span class="err">Falta tu clave: escríbela aquí una vez (está en tu PC, en Vuelos-App\privado\CLAVE.txt) y toca Guardar y probar.</span>'; return; }
     const q = { origen: ORI().iata, destino: B.destino.iata, ida: B.ida, vuelta: B.modo === 'rt' ? B.vuelta : '', clase: B.clase };
     ver('res');
     $('bsResRuta').textContent = `${ORI().iata} → ${B.destino.iata} · ${B.destino.ciudad}`;
