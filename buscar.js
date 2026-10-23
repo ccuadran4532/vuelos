@@ -244,7 +244,7 @@
     ver('res');
     $('bsResRuta').textContent = `${ORI().iata} → ${B.destino.iata} · ${B.destino.ciudad}`;
     $('bsResInfo').textContent = `${fCorta(B.ida)}${q.vuelta ? ' – ' + fCorta(q.vuelta) + ' · ' + noches() + ' noches' : ' · solo ida'} · ${txtPersonas()}`;
-    $('bsResCuerpo').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#C8501E" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Buscando en todas las aerolíneas…</b><span class="gfoot">Reviso tu fecha y 3 días antes y después. Tarda unos 20 segundos.</span></div>`;
+    $('bsResCuerpo').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#8B7BEF" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Buscando en todas las aerolíneas…</b><span class="gfoot">Reviso tu fecha y 3 días antes y después. Tarda unos 20 segundos.</span></div>`;
     if (!AEROS) { try { AEROS = await (await fetch('aeropuertos.json')).json(); Object.keys(AEROS).forEach(cc => AEROS[cc].forEach(a => PAIS_DE[a[0]] = cc)); } catch (e) {} }
     try {
       const u = conf.url + (conf.url.includes('?') ? '&' : '?') + 'clave=' + encodeURIComponent(conf.key) + '&accion=buscar&flex=3&' + new URLSearchParams(q).toString();
@@ -386,7 +386,7 @@
   // 5) tarifa error
   function tarifaErrorCard(f, P) {
     if (!f.min || !f.tipico || f.min >= f.tipico[0] * 0.6) return '';
-    return `<div class="hero" style="border-color:rgba(200,80,30,0.54)"><span class="k" style="color:var(--tint)">⚡ Posible tarifa error</span>
+    return `<div class="hero" style="border-color:rgba(139,123,239,0.54)"><span class="k" style="color:var(--tint)">⚡ Posible tarifa error</span>
       <p><b>${CLP(f.min)}</b> por persona, cuando lo normal es ${CLP(f.tipico[0])}–${CLP(f.tipico[1])}: ${Math.round((1 - f.min / f.tipico[0]) * 100)}% bajo lo normal. Suele durar pocas horas.</p>
       <div class="gfoot" style="padding:0">Cómprala en la aerolínea, no pagues hotel ni nada más hasta que llegue la confirmación con el número de boleto (a veces la aerolínea la anula).</div></div>`;
   }
@@ -486,7 +486,7 @@
     return 'https://www.latamairlines.com/cl/es/ofertas-vuelos?' + p.toString();
   }
   function bloqueMillas(v, f, i) {
-    return `<div class="glass" style="border-radius:16px;padding:12px 14px;display:grid;gap:8px;border-color:rgba(200,80,30,0.3);margin-top:-8px">
+    return `<div class="glass" style="border-radius:16px;padding:12px 14px;display:grid;gap:8px;border-color:rgba(139,123,239,0.3);margin-top:-8px">
       <div style="font-size:13px;font-weight:800;color:var(--tint)">Millas LATAM Pass</div>
       <a class="btn plain" style="padding:10px;font-size:14px" href="${linkMillas(f)}" target="_blank" rel="noopener noreferrer">Ver precio en millas ↗</a>
       <label style="display:flex;align-items:center;gap:10px;font-size:13px;color:var(--label2)">Millas por persona
@@ -636,7 +636,7 @@
       const idx = H.map((x, i) => x[0] >= e.d && x[0] <= e.h ? i : -1).filter(i => i >= 0);
       if (!idx.length) return;
       const x0 = idx[0] * bw, x1 = (idx[idx.length - 1] + 1) * bw;
-      bandas += `<rect x="${x0.toFixed(1)}" y="${top}" width="${(x1 - x0).toFixed(1)}" height="${A}" fill="rgba(200,80,30,0.084)"/>`;
+      bandas += `<rect x="${x0.toFixed(1)}" y="${top}" width="${(x1 - x0).toFixed(1)}" height="${A}" fill="rgba(139,123,239,0.084)"/>`;
       etiquetas += `<text x="${((x0 + x1) / 2).toFixed(1)}" y="11" text-anchor="middle" font-size="9" font-weight="800" fill="var(--tint)">${e.n}</text>`;
     });
     const tip = f.tipico ? `<rect x="0" y="${y(f.tipico[1]).toFixed(1)}" width="${W}" height="${(y(f.tipico[0]) - y(f.tipico[1])).toFixed(1)}" fill="rgba(30,142,62,0.07)"/>
@@ -713,7 +713,7 @@
     const presu = +$('exPresu').value || 0;
     const lista = DESTINOS.filter(x => (EX_REGION === 'todos' || x[2] === EX_REGION) && x[0] !== ORI().iata);
     const P = B.a + B.n;
-    $('exRes').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#C8501E" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Revisando ${lista.length} destinos…</b><span class="gfoot">Salida ${fCorta(ida)}${vuelta ? ', vuelta ' + fCorta(vuelta) : ', solo ida'}. Unos 15 segundos.</span></div>`;
+    $('exRes').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#8B7BEF" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Revisando ${lista.length} destinos…</b><span class="gfoot">Salida ${fCorta(ida)}${vuelta ? ', vuelta ' + fCorta(vuelta) : ', solo ida'}. Unos 15 segundos.</span></div>`;
     const tandas = []; for (let i = 0; i < lista.length; i += 8) tandas.push(lista.slice(i, i + 8));
     const res = [];
     await Promise.all(tandas.map(async t => {

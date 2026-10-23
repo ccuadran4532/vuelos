@@ -1,9 +1,9 @@
-/* Vuelos — estilo claro tipo Apple: fondo gris muy claro, tarjetas blancas, letra negra, un solo acento (naranjo atardecer). */
+/* Vuelos — estilo claro tipo Apple: fondo gris muy claro, tarjetas blancas, letra negra, un solo acento (lavanda). */
 :root{
   --sky:#F5F5F7; --sky2:#F5F5F7; --paper:#F5F5F7;
   --label:#1D1D1F; --label2:#6E6E73; --label3:#86868B;
   --glass:#FFFFFF; --glass2:#E8E8ED; --line:#D2D2D7; --sep:#E5E5EA;
-  --tint:#C8501E; --tintInk:#FFFFFF; --ok:#1E8E3E; --warn:#A15C00; --bad:#D70015; --gold:#B08D57;
+  --tint:#8B7BEF; --tintInk:#FFFFFF; --ok:#1E8E3E; --warn:#A15C00; --bad:#D70015; --gold:#B08D57;
   --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Segoe UI",system-ui,sans-serif;
   color-scheme:light;
 }
@@ -65,7 +65,7 @@ button.cell:active,a.cell:active{background:rgba(0,0,0,0.024)}
 .b-green{background:rgba(30,142,62,0.126);color:var(--ok);border-color:rgba(30,142,62,0.28)}
 .b-red{background:rgba(215,0,21,0.09);color:var(--bad);border-color:rgba(215,0,21,0.2)}
 .b-orange{background:rgba(161,92,0,0.108);color:var(--warn);border-color:rgba(161,92,0,0.24)}
-.b-blue{background:rgba(200,80,30,0.108);color:var(--tint);border-color:rgba(200,80,30,0.27)}
+.b-blue{background:rgba(139,123,239,0.108);color:var(--tint);border-color:rgba(139,123,239,0.27)}
 .hero{border-radius:24px;padding:16px 18px;display:grid;gap:6px}
 .hero .k{font-size:12px;font-weight:600;color:var(--tint);text-transform:uppercase;letter-spacing:.05em}
 .hero p{margin:0;font-size:15px;line-height:1.45}
@@ -182,7 +182,7 @@ table.bag th{color:var(--label2);font-weight:600}
 .dow{font-size:11px;font-weight:600;color:var(--label2);text-align:center;padding-bottom:2px}
 .dia{height:40px;display:grid;place-items:center;font:600 14px var(--font);border:0;background:transparent;color:var(--label);cursor:pointer;padding:0}
 .dia:disabled{color:rgba(0,0,0,0.075);cursor:default}
-.dia.in{background:rgba(200,80,30,0.132)}
+.dia.in{background:rgba(139,123,239,0.132)}
 .dia.ini{background:var(--tint);color:var(--tintInk);font-weight:600;border-radius:12px 0 0 12px}
 .dia.fin{background:var(--tint);color:var(--tintInk);font-weight:600;border-radius:0 12px 12px 0}
 .dia.ini.fin,.dia.solo{background:var(--tint);color:var(--tintInk);border-radius:12px}
@@ -229,7 +229,7 @@ table.bag th{color:var(--label2);font-weight:600}
 @media (prefers-reduced-motion:reduce){.avion{animation:none}}
 
 /* ===== asistente ===== */
-.banner{display:flex;align-items:center;gap:14px;border-radius:22px;padding:14px 16px;color:var(--label);text-align:left;cursor:pointer;font:inherit;border-color:rgba(200,80,30,0.33)}
+.banner{display:flex;align-items:center;gap:14px;border-radius:22px;padding:14px 16px;color:var(--label);text-align:left;cursor:pointer;font:inherit;border-color:rgba(139,123,239,0.33)}
 .banner .bi{width:44px;height:44px;border-radius:14px;background:var(--tint);display:grid;place-items:center;font-size:22px;flex:none}
 .banner small{color:var(--label2);font-size:13px}
 .chat{display:flex;flex-direction:column;gap:10px}
@@ -252,12 +252,12 @@ table.bag th{color:var(--label2);font-weight:600}
 .cdia.alto{background:rgba(215,0,21,0.125)}
 .cdia.sin{background:rgba(0,0,0,0.015);opacity:.6}
 .cdia.fuera{background:transparent;opacity:.35;cursor:default}
-.cdia.rec{outline:2px solid var(--tint);outline-offset:-2px;background:rgba(200,80,30,0.21)}
+.cdia.rec{outline:2px solid var(--tint);outline-offset:-2px;background:rgba(139,123,239,0.21)}
 .cdia.rec .n{color:var(--tint)}
 .leyenda{font-size:11px;color:var(--label2);display:flex;align-items:center;gap:5px;flex-wrap:wrap}
 .lg{width:10px;height:10px;border-radius:3px;display:inline-block}
 .lg.bajo{background:rgba(30,142,62,0.42)} .lg.medio{background:rgba(0,0,0,0.105)} .lg.alto{background:rgba(215,0,21,0.3)}
-.recom{border-radius:14px;padding:10px 12px;background:rgba(200,80,30,0.084);border:1px solid rgba(200,80,30,0.3);font-size:14px;line-height:1.5}
+.recom{border-radius:14px;padding:10px 12px;background:rgba(139,123,239,0.084);border:1px solid rgba(139,123,239,0.3);font-size:14px;line-height:1.5}
 .chbarra{position:fixed;left:12px;right:12px;bottom:calc(92px + env(safe-area-inset-bottom,0px));z-index:7;border-radius:24px;padding:6px;display:flex;align-items:center;gap:6px;max-width:660px;margin:0 auto;flex-wrap:wrap}
 .chbarra input{flex:1;min-width:0;background:transparent;border:0;outline:0;color:var(--label);font:600 16px var(--font);padding:10px 4px}
 .chbarra input::placeholder{color:var(--label3)}
@@ -371,7 +371,7 @@ body{font-size:17px;letter-spacing:-.01em}
 .bdia.sel{background:var(--paper);outline:2px solid var(--tint)}
 .bdia .bar{background:#D2D2D7}
 .dia:disabled{color:#C7C7CC}
-.dia.in{background:rgba(200,80,30,.12)}
+.dia.in{background:rgba(139,123,239,.12)}
 .cdia{background:var(--paper)}
 .grilla td button{background:var(--paper);border:0}
 .grilla td button.gmin{background:rgba(30,142,62,.14);box-shadow:inset 0 0 0 1.5px var(--ok)}
@@ -385,9 +385,12 @@ details.guia{background:var(--paper);border:0}
 .reciente,.excard,.ag{color:var(--label)}
 .tile{border:0}
 .badge{font-weight:600;border:0}
-.b-blue{background:rgba(200,80,30,.1);color:var(--tint)}
+.b-blue{background:rgba(139,123,239,.1);color:var(--tint)}
 .vrow,.vrow2{border-top-color:var(--sep)}
 .pfila .cod,.pfila .iata{background:var(--paper)}
-:focus-visible{outline:3px solid rgba(200,80,30,.5)}
+:focus-visible{outline:3px solid rgba(139,123,239,.5)}
 .banner .bi{background:var(--paper)}
 .vcard .tintlink{font-size:15px;font-weight:500;line-height:1.35}
+.centro{text-align:center}
+.centro .large,.centro .sub{margin-left:0}
+.btn{font-size:18px}
