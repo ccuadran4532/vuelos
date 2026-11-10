@@ -261,12 +261,13 @@
       try { localStorage.setItem('recientes', JSON.stringify(L.slice(0, 8))); } catch (e) {}
       pintarRes();
     } catch (err) {
-      $('bsResCuerpo').innerHTML = `<div class="hero"><span class="k">No se pudo buscar</span><p>${esc(err.message)}.${/bloqueando/.test(err.message) ? "" : " Revisa tu conexión e inténtalo de nuevo."}</p></div><button type="button" class="btn" id="bsReintentar">Reintentar</button>`;
+      $('bsResCuerpo').innerHTML = `<div class="hero"><span class="k">No se pudo buscar</span><p>${esc(err.message)}.${/bloqueando/.test(err.message) ? "" : " Revisa tu conexión e inténtalo de nuevo."}</p></div>${/bloqueando/.test(err.message) ? `<a class="btn plain" href="https://www.google.com/travel/flights?q=${encodeURIComponent(textoGF())}&curr=CLP&hl=es-419&gl=CL" target="_blank" rel="noopener noreferrer">Ver esta búsqueda en Google Flights ahora ↗</a>` : ""}<button type="button" class="btn" id="bsReintentar">Reintentar</button>`;
       $('bsReintentar').onclick = buscar;
     }
   }
 
   // El lector que lee Google a veces se bloquea por una hora (por exceso de uso de todos sus usuarios anónimos).
+  const textoGF = () => B.modo === "rt" && B.vuelta ? `Flights from ${ORI().iata} to ${B.destino.iata} on ${B.ida} through ${B.vuelta}` : `One way flights from ${ORI().iata} to ${B.destino.iata} on ${B.ida}`;
   function textoBloqueo(hasta) {
     const h = hasta ? new Date(hasta).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '';
     return `Google está bloqueando las búsquedas por un rato${h ? ', hasta las ' + h : ''}. No es tu clave ni tu celular: es un bloqueo temporal del servicio que lee Google. Vuelve a buscar después de esa hora`;
