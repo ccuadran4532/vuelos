@@ -166,6 +166,8 @@ const conf={
   get key(){try{return localStorage.getItem('api_key')||''}catch(e){return''}},
   set key(v){try{localStorage.setItem('api_key',(v||'').trim().toUpperCase())}catch(e){}}
 };
+// Pide a Android guardar los datos de la app de forma permanente (que no borre la clave al liberar espacio).
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist()}catch(e){}
 function aplicar(datos,desdeCache){
   OFERTAS=(datos.ofertas||[]).map(o=>({...o,id:o.id||((o.aerolinea||'x').toLowerCase().slice(0,3)+'-'+o.iata)}));
   MIS=(datos.seguimiento||[]).map(m=>({...m,id:m.iata}));
