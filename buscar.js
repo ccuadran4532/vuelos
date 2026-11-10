@@ -261,7 +261,7 @@
       try { localStorage.setItem('recientes', JSON.stringify(L.slice(0, 8))); } catch (e) {}
       pintarRes();
     } catch (err) {
-      $('bsResCuerpo').innerHTML = `<div class="hero"><span class="k">No se pudo buscar</span><p>${esc(err.message)}. Revisa tu conexión e inténtalo de nuevo.</p></div><button type="button" class="btn" id="bsReintentar">Reintentar</button>`;
+      $('bsResCuerpo').innerHTML = `<div class="hero"><span class="k">No se pudo buscar</span><p>${esc(err.message)}.${/bloqueando/.test(err.message) ? "" : " Revisa tu conexión e inténtalo de nuevo."}</p></div><button type="button" class="btn" id="bsReintentar">Reintentar</button>`;
       $('bsReintentar').onclick = buscar;
     }
   }
