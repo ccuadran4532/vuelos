@@ -249,7 +249,8 @@
     try {
       const u = conf.url + (conf.url.includes('?') ? '&' : '?') + 'clave=' + encodeURIComponent(conf.key) + '&accion=buscar&flex=3&' + new URLSearchParams(q).toString();
       const j = await (await fetch(u)).json();
-      if (!j.ok) throw new Error(j.error === 'clave' ? 'clave incorrecta' : (j.error || 'sin respuesta'));
+      if (!j.ok) throw new Error(j.error === 'clave' ? 'clave incorrecta' : j.error === 'bloqueo' ? textoBloqueo(j.hasta) : (j.error || 'sin respuesta'));
+      if (!j.fechas.some(f => f.min)) throw new Error('Google no mostró vuelos para esas fechas');
       RES = j; FILTRO = 'todos'; FRANJA = 'todas';
       SEL = Math.max(0, RES.fechas.findIndex(f => f.ida === B.ida));
       const conPrecio = RES.fechas.filter(f => f.min);
@@ -264,6 +265,13 @@
       $('bsReintentar').onclick = buscar;
     }
   }
+
+  // El lector que lee Google a veces se bloquea por una hora (por exceso de uso de todos sus usuarios anónimos).
+  function textoBloqueo(hasta) {
+    const h = hasta ? new Date(hasta).toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }) : '';
+    return `Google está bloqueando las búsquedas por un rato${h ? ', hasta las ' + h : ''}. No es tu clave ni tu celular: es un bloqueo temporal del servicio que lee Google. Vuelve a buscar después de esa hora`;
+  }
+  window.vuelosTextoBloqueo = textoBloqueo;
 
   function pintarRes() {
     const P = B.a + B.n, F = RES.fechas, f = F[SEL];
@@ -715,17 +723,17 @@
     const P = B.a + B.n;
     $('exRes').innerHTML = `<div class="cargando glass" style="border-radius:24px"><svg class="avion" viewBox="0 0 24 24" fill="#8B7BEF" aria-hidden="true"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></svg><b>Revisando ${lista.length} destinos…</b><span class="gfoot">Salida ${fCorta(ida)}${vuelta ? ', vuelta ' + fCorta(vuelta) : ', solo ida'}. Unos 15 segundos.</span></div>`;
     const tandas = []; for (let i = 0; i < lista.length; i += 8) tandas.push(lista.slice(i, i + 8));
-    const res = [];
+    const res = []; let bloqueo = null;
     await Promise.all(tandas.map(async t => {
       try {
         const q = new URLSearchParams({ clave: conf.key, accion: 'explorar', origen: ORI().iata, destinos: t.map(x => x[0]).join(','), ida, vuelta, clase: B.clase });
         const j = await (await fetch(conf.url + (conf.url.includes('?') ? '&' : '?') + q)).json();
-        if (j.ok) res.push(...j.destinos);
+        if (j.ok) res.push(...j.destinos); else if (j.error === 'bloqueo') bloqueo = j.hasta;
       } catch (e) {}
     }));
     const info = Object.fromEntries(DESTINOS.map(x => [x[0], x]));
     const ok = res.filter(x => x.min).sort((p, q) => p.min - q.min);
-    if (!ok.length) { $('exRes').innerHTML = '<div class="empty glass" style="border-radius:20px">No pude traer precios ahora. Inténtalo de nuevo en un momento.</div>'; return; }
+    if (!ok.length) { $('exRes').innerHTML = '<div class="empty glass" style="border-radius:20px">' + (bloqueo ? esc(textoBloqueo(bloqueo)) + '.' : 'No pude traer precios ahora. Inténtalo de nuevo en un momento.') + '</div>'; return; }
     $('exRes').innerHTML = `<div class="gfoot">${ok.length} destinos · salida ${fCorta(ida)}${vuelta ? ' → ' + fCorta(vuelta) : ' (solo ida)'} · precio por persona con tasas · total para ${P}</div>` +
       ok.map(x => {
         const fuera = presu && x.min > presu, oferta = x.tipico && x.min < x.tipico[0];

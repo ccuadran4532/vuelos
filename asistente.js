@@ -151,10 +151,10 @@
     for (let intento = 0; intento < 2; intento++) {
       try {
         const j = await (await fetch(conf.url + (conf.url.includes('?') ? '&' : '?') + q.toString())).json();
-        if (!j.ok) throw new Error(j.error === 'clave' ? 'la clave no coincide' : (j.error || 'sin respuesta'));
+        if (!j.ok) throw new Error(j.error === 'clave' ? 'la clave no coincide' : j.error === 'bloqueo' && window.vuelosTextoBloqueo ? window.vuelosTextoBloqueo(j.hasta) : (j.error || 'sin respuesta'));
         return j;
       } catch (err) {
-        if (intento === 1 || /clave/.test(err.message)) throw err;
+        if (intento === 1 || /clave|bloqueando/.test(err.message)) throw err;
         await new Promise(res => setTimeout(res, 1500));
       }
     }
@@ -179,7 +179,7 @@
           dias.push(...j.dias); if (!j.desdeMemoria) todosMemoria = false;
         } catch (err) {
           errores++;
-          if (/clave/.test(err.message)) throw err;
+          if (/clave|bloqueando/.test(err.message)) throw err;
           for (let i = 0; i < t.dias; i++) { const ida = sumar(t.desde, i); dias.push({ ida, vuelta: r.modo === 'ow' ? '' : sumar(ida, r.noches) }); }
         }
         listos += t.dias;
@@ -200,7 +200,7 @@
     } catch (err) {
       clearInterval(reloj);
       HIST.pop();
-      bot(`No pude terminar la búsqueda: ${esc(err.message)}. Revisa tu conexión e inténtalo de nuevo.`);
+      bot(/bloqueando/.test(err.message) ? `⏳ ${esc(err.message)}.` : `No pude terminar la búsqueda: ${esc(err.message)}. Revisa tu conexión e inténtalo de nuevo.`);
     }
   }
 
